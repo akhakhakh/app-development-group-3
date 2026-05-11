@@ -159,4 +159,6 @@ Step 3 —
 - Click the green Run button (▶) or press Shift+F10
 - Android Studio will build and install the APK directly onto your phone
 
+
+  Keep in mind that the application only runs from the app folder. In your own branch, connect your game to the app for testing purposes, but it should not be merged to main.
 ---
