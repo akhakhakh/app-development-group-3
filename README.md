@@ -64,13 +64,13 @@ Each game module must follow these rules so it integrates correctly with the mai
 
 ## Renaming Your Package or Activity
 
-### Renaming the package (e.g. `com.group3.gyroscope` → `com.group3.tiltgame`)
+### Renaming the package (e.g. `com.group3.gyroscope` → `com.group3.gyromaze`)
 
 1. In the Project panel, right-click your package folder → **Refactor → Rename**
 2. Android Studio will rename all references automatically
 3. Manually update the `namespace` field in your `build.gradle.kts` to match:
    ```kotlin
-   namespace = "com.group3.tiltgame"
+   namespace = "com.group3.gyromaze"
    ```
 4. Check your `AndroidManifest.xml` — the `package` attribute (if present) should also match
 5. Sync Gradle (**File → Sync Project with Gradle Files**)
@@ -85,13 +85,13 @@ Each game module must follow these rules so it integrates correctly with the mai
    ```
 4. Tell whoever owns the `app` module so they can update the game list to point to your new Activity name
 
-### Renaming the module itself (e.g. `gyroscope` → `tilt-game`)
+### Renaming the module itself (e.g. `gyroscope` → `gyro-maze`)
 
 This is more involved — only do it if really necessary:
 
 1. Rename the folder on disk
-2. Update `settings.gradle.kts` at the root — change `include(":gyroscope")` to `include(":tilt-game")`
-3. Update `app/build.gradle.kts` — change `implementation(project(":gyroscope"))` to `implementation(project(":tilt-game"))`
+2. Update `settings.gradle.kts` at the root — change `include(":gyroscope")` to `include(":gyro-maze")`
+3. Update `app/build.gradle.kts` — change `implementation(project(":gyroscope"))` to `implementation(project(":gyro-maze"))`
 4. Sync Gradle
 
 ---
@@ -136,20 +136,3 @@ Avoid committing:
 - `.gradle/` (already in `.gitignore`)
 
 ---
-
-## Sensors Quick Reference
-
-| Module | Sensor / API |
-|---|---|
-| `touchscreen1p` | `MotionEvent` (single touch) |
-| `touchscreen2p` | `MotionEvent` (multi-touch pointer IDs) |
-| `microphone` | `AudioRecord` or `MediaRecorder` |
-| `gyroscope` | `SensorManager` + `Sensor.TYPE_GYROSCOPE` |
-| `camera` | `CameraX` library |
-
-Remember to declare any required permissions in **your module's** `AndroidManifest.xml`, e.g.:
-
-```xml
-<uses-permission android:name="android.permission.RECORD_AUDIO" />
-<uses-permission android:name="android.permission.CAMERA" />
-```
