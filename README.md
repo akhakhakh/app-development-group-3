@@ -136,3 +136,27 @@ Avoid committing:
 - `.gradle/` (already in `.gitignore`)
 
 ---
+
+## How to Build and Run The App On Your Phone
+
+Step 1 — 
+- Enable Developer Options on your Android phone
+- Go to Settings → About phone
+- Tap Build number 7 times until you see "You are now a developer!"
+- Go back to Settings → System → Developer options (location varies by phone)
+- Turn on USB debugging
+
+Step 2 — 
+- Connect and authorize
+- Plug in your USB cable
+- A popup will appear on your phone: "Allow USB debugging?" → tap Allow
+- In Android Studio, look at the top toolbar — your phone's name should appear in the device dropdown (e.g., Samsung Galaxy S21)
+- If the phone doesn't appear: try a different cable (some cables are charge-only), or install your phone manufacturer's USB driver on Windows.
+
+Step 3 — 
+- Run the app
+- Make sure the run configuration dropdown (next to the play button) shows app
+- Click the green Run button (▶) or press Shift+F10
+- Android Studio will build and install the APK directly onto your phone
+
+---
