@@ -1,12 +1,11 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.group3.touchscreen2p"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
