@@ -23,6 +23,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.group3.camera.ui.theme.FiveSensorsTheme
 
+private sealed class Screen {
+    object Landing : Screen()
+    object FaceCheck : Screen()
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +35,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             FiveSensorsTheme {
                 CameraPermissionWrapper {
-                    CameraScreen()
+                    var screen by remember { mutableStateOf<Screen>(Screen.Landing) }
+                    when (screen) {
+                        Screen.Landing ->
+                            LandingScreen(onPlay = { screen = Screen.FaceCheck })
+                        Screen.FaceCheck ->
+                            FaceCheckScreen(onNext = { /* TODO: navigate to Tutorial screen */ })
+                    }
                 }
             }
         }
@@ -58,7 +69,7 @@ private fun CameraPermissionWrapper(content: @Composable () -> Unit) {
         content()
     } else {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Camera permission is required to run this demo.")
+            Text("Camera permission is required to run this game.")
         }
     }
 }
