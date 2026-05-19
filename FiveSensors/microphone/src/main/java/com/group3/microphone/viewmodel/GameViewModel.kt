@@ -1,4 +1,4 @@
-package com.group3.five_sensors.viewmodel
+package com.group3.microphone.viewmodel
 
 import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
