@@ -1,4 +1,4 @@
-package com.group3.five_sensors
+package com.group3.microphone
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -31,9 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.group3.five_sensors.ui.theme.FiveSensorsTheme
+import com.group3.microphone.ui.theme.FiveSensorsTheme
 
-private val BgBlue = Color(0xFF4DA6D4)
+private val BgBlue = Color(0xFF4890D1)
 private val Yellow = Color(0xFFFFD426)
 private val CharDark = Color(0xFF1A2035)
 
@@ -50,7 +50,7 @@ fun HomeScreen(
             .padding(horizontal = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(72.dp))
+        Spacer(Modifier.height(120.dp))
 
         Text("VOICE", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 52.sp)
         Text("JUMP", color = Yellow, fontSize = 52.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 52.sp)
@@ -84,7 +84,7 @@ fun HomeScreen(
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = Yellow, contentColor = CharDark)
         ) {
-            Text("PLAY", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Play", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
         }
 
         Spacer(Modifier.height(14.dp))
