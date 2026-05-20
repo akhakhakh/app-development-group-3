@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.group3.touchscreen2p.ui.HomeScreen
 
 @Composable
 fun TapBattleNavGraph(navController: NavHostController) {
@@ -15,6 +16,7 @@ fun TapBattleNavGraph(navController: NavHostController) {
         startDestination = Routes.HOME
     ) {
         composable(Routes.HOME) {
+            HomeScreen(onPlayClick = { navController.navigate(Routes.GAME) })
         }
 
         composable(Routes.GAME) {
