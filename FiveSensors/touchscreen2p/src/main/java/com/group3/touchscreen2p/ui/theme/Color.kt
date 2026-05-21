@@ -5,7 +5,10 @@ import androidx.compose.ui.graphics.Color
 // Background
 val NavyBackground = Color(0xFF0A0E21)
 val NavySurface    = Color(0xFF111827)
-val NavyCard       = Color(0xFF1A2235)
+val NavyCard       = Color(0xFF1A2A4A)
+val GreyText       = Color(0xFF556080)
+val BlueDivider    = Color(0xFF1E2A4A)
+
 
 // Brand
 val YellowAccent   = Color(0xFFFFD60A)
