@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.group3.gyroscope"
+    namespace = "com.group3.gyromaze"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -51,4 +51,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation("androidx.compose.foundation:foundation")
 }

@@ -1,4 +1,4 @@
-package com.group3.myapplication
+package com.group3.gyromaze
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
