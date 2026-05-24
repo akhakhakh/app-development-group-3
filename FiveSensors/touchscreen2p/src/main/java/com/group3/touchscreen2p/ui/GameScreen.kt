@@ -1,21 +1,40 @@
 package com.group3.touchscreen2p.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.group3.touchscreen2p.Constants
 import com.group3.touchscreen2p.model.Phase
+import com.group3.touchscreen2p.ui.theme.BlueDivider
+import com.group3.touchscreen2p.ui.theme.BluePlayer2
+import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
+import com.group3.touchscreen2p.ui.theme.NavySurface
+import com.group3.touchscreen2p.ui.theme.OrangePlayer1
+import com.group3.touchscreen2p.ui.theme.YellowAccent
 import com.group3.touchscreen2p.viewmodel.GameViewModel
 
 @Composable
@@ -38,8 +57,7 @@ fun GameScreen(
     val density = LocalDensity.current
     //Canvas use pixels while Constants use dp. Local Density gives the current screen density to
     // convert to pixels
-    val targetRadiusPx = with(density) {
-        Constants.TARGET_RADIUS_DP.dp.toPx() }
+    val targetRadiusPx = with(density) { Constants.TARGET_RADIUS_DP.dp.toPx() }
     val stateRef = rememberUpdatedState(state)
 
     Box(
@@ -79,7 +97,147 @@ fun GameScreen(
                         }
                     }
                 }
+
             }
-    )
+    ) {
+        // --- Canvas: dividing line + targets ---
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawLine(
+                color = BlueDivider,
+                start = Offset(0f, size.height / 2f),
+                end = Offset(size.width, size.height / 2f),
+                strokeWidth = 3.dp.toPx()
+            )
+
+            state.targets.forEach { target ->
+                val cx = target.normalizedX * size.width
+                val cy = target.normalizedY * size.height
+                val color = if (target.player == 1) OrangePlayer1 else
+                    BluePlayer2
+
+                // Outer ring
+                drawCircle(
+                    color = color.copy(alpha = 0.25f),
+                    radius = targetRadiusPx,
+                    center = Offset(cx, cy),
+                    style = Stroke(width = 2.dp.toPx())
+                )
+
+                // Middle ring
+                drawCircle(
+                    color = color.copy(alpha = 0.55f),
+                    radius = targetRadiusPx * 0.65f,
+                    center = Offset(cx, cy),
+                    style = Stroke(width = 2.dp.toPx())
+                )
+
+                // Bullseye
+                drawCircle(
+                    color = color,
+                    radius = targetRadiusPx * 0.35f,
+                    center = Offset(cx, cy)
+                )
+
+                // Timer arc — starts full, shrinks to 0 as target expires
+                drawArc(
+                    color = color,
+                    startAngle = -90f,
+                    sweepAngle = target.progress * 360f,
+                    useCenter = false,
+                    topLeft = Offset(cx - targetRadiusPx, cy - targetRadiusPx),
+                    size = Size(targetRadiusPx * 2f, targetRadiusPx * 2f),
+                    style = Stroke(width = 3.5.dp.toPx())
+                )
+            }
+        }
+
+        // --- P2 HUD (top, rotated so P2 reads it upright) ---
+        PlayerHud(
+            player = 2,
+            score = state.score2,
+            phase = state.phase,
+            countdownValue = state.countdownValue,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .graphicsLayer { rotationZ = 180f }
+        )
+
+        // --- P1 HUD (bottom) ---
+        PlayerHud(
+            player = 1,
+            score = state.score1,
+            phase = state.phase,
+            countdownValue = state.countdownValue,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        )
+
+        // --- Countdown overlay ---
+        if (state.phase == Phase.COUNTDOWN) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "${state.countdownValue}",
+                    fontSize = 96.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = YellowAccent.copy(alpha = 0.85f)
+                )
+            }
+        }
+    }
 }
+
+@Composable
+private fun PlayerHud(
+    player: Int,
+    score: Int,
+    phase: Phase,
+    countdownValue: Int,
+    modifier: Modifier = Modifier
+) {
+    val playerColor = if (player == 1) OrangePlayer1 else BluePlayer2
+
+    Box(
+        modifier = modifier
+            .height(72.dp)
+            .background(NavySurface.copy(alpha = 0.85f))
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = "P$player",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = playerColor.copy(alpha = 0.7f),
+            modifier = Modifier.align(Alignment.CenterStart)
+        )
+        Text(
+            text = "$score",
+            fontSize = 36.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = playerColor,
+            modifier = Modifier.align(Alignment.Center)
+        )
+        if (phase == Phase.COUNTDOWN) {
+            Text(
+                text = "$countdownValue",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = YellowAccent,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        } else {
+            Text(
+                text = "→ ${Constants.WIN_SCORE}",
+                fontSize = 12.sp,
+                color = GreyText,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        }
+    }
+}
+
 
