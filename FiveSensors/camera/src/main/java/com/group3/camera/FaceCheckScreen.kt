@@ -21,12 +21,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -50,15 +53,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import kotlin.math.sqrt
 
-// ── Design tokens (from Figma) ────────────────────────────────────────────
 private val FcBlue       = Color(0xFF3885F0)
 private val FcGreen      = Color(0xFF40C76B)
-private val FcBackground = Color(0xFFD9EBFF)   // light-blue screen background
+private val FcBackground = Color(0xFFD9EBFF)  
 private val FcTextPri    = Color(0xFF1A1A1F)
 private val FcTextSec    = Color(0xFF8C8C91)
 private val FcBorder     = Color(0xFFDBDBE0)
 
-// ── Screen ────────────────────────────────────────────────────────────────
 
 @Composable
 fun FaceCheckScreen(onNext: () -> Unit) {
@@ -67,24 +68,16 @@ fun FaceCheckScreen(onNext: () -> Unit) {
 
     var result by remember { mutableStateOf<FaceCheckResult?>(null) }
 
-    // AD5S-162: track face-centre history to decide "hold still"
     val positionHistory = remember { ArrayDeque<PointF>() }
     var isStill by remember { mutableStateOf(false) }
 
-    // AD5S-163: glasses warning — eye-open probabilities both low
-    var showGlassesWarning by remember { mutableStateOf(false) }
+    var showAccessoryWarning by remember { mutableStateOf(false) }
 
-    // AD5S-165: hat/accessories hint — head pitched far down (forehead hidden)
-    var showHatsHint by remember { mutableStateOf(false) }
-
-    // Derive check states
     val face = result?.faces?.firstOrNull()
     val faceDetected = face != null
-    // AD5S-164: acceptable brightness range (not too dark, not overexposed)
     val lightingOk = result?.avgBrightness?.let { it in 0.12f..0.88f } ?: false
     val allPassed = faceDetected && lightingOk && isStill
 
-    // Update stability + warning flags whenever a new frame arrives
     LaunchedEffect(result) {
         val f = result?.faces?.firstOrNull()
         if (f != null) {
@@ -99,26 +92,16 @@ fun FaceCheckScreen(onNext: () -> Unit) {
                 val maxDev = positionHistory.maxOf {
                     sqrt(((it.x - meanX) * (it.x - meanX) + (it.y - meanY) * (it.y - meanY)).toDouble()).toFloat()
                 }
-                // AD5S-162: stable when max deviation < 25 image-pixels
                 isStill = maxDev < 25f
             }
 
-            // AD5S-163: both eye-open probabilities low → possible glasses glare
-            val leftEye = f.leftEyeOpenProbability ?: 1f
-            val rightEye = f.rightEyeOpenProbability ?: 1f
-            showGlassesWarning = leftEye < 0.55f && rightEye < 0.55f
-
-            // AD5S-165: large downward pitch → forehead likely obstructed by hat
-            showHatsHint = f.headEulerAngleX < -18f
         } else {
             positionHistory.clear()
             isStill = false
-            showGlassesWarning = false
-            showHatsHint = false
         }
     }
 
-    // Release camera when this screen is disposed (e.g. back-navigation)
+
     DisposableEffect(Unit) {
         onDispose {
             ProcessCameraProvider.getInstance(context).get().unbindAll()
@@ -129,8 +112,9 @@ fun FaceCheckScreen(onNext: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(FcBackground)
+            .statusBarsPadding()
     ) {
-        // ── App bar ──────────────────────────────────────────────────────
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -141,7 +125,7 @@ fun FaceCheckScreen(onNext: () -> Unit) {
             Text("FACE CHECK", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        // ── Step dots ────────────────────────────────────────────────────
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -165,7 +149,6 @@ fun FaceCheckScreen(onNext: () -> Unit) {
                 .padding(top = 4.dp)
         )
 
-        // ── Camera preview + oval overlay (AD5S-161) ─────────────────────
         val ovalColor by animateColorAsState(
             targetValue = if (faceDetected) FcGreen else FcBlue,
             animationSpec = tween(300),
@@ -175,9 +158,9 @@ fun FaceCheckScreen(onNext: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 44.dp, vertical = 10.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
                 .aspectRatio(0.75f)
-                .clip(RoundedCornerShape(120.dp))        // clip preview to oval shape
+                .clip(RoundedCornerShape(120.dp))       
                 .border(2.dp, FcBorder, RoundedCornerShape(120.dp))
         ) {
             AndroidView(
@@ -216,7 +199,6 @@ fun FaceCheckScreen(onNext: () -> Unit) {
                 }
             )
 
-            // Oval border drawn on top of the camera (AD5S-161)
             androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                 val pad = 6.dp.toPx()
                 drawOval(
@@ -228,7 +210,7 @@ fun FaceCheckScreen(onNext: () -> Unit) {
             }
         }
 
-        // ── Instruction ───────────────────────────────────────────────────
+
         Text(
             text = "Centre your face inside the oval",
             color = FcTextPri,
@@ -239,41 +221,48 @@ fun FaceCheckScreen(onNext: () -> Unit) {
 
         Spacer(Modifier.height(10.dp))
 
-        // ── Check list ────────────────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // AD5S-162: face detected + aligned in oval
             CheckRow(label = "Face detected", passed = faceDetected)
-            // AD5S-164: lighting check
             CheckRow(label = "Lighting OK", passed = lightingOk)
-            // AD5S-162 (stability): hold still
             CheckRow(label = "Hold still", passed = isStill, warningWhenFailed = true)
-
-            // AD5S-163: glasses warning
-            if (showGlassesWarning) {
-                TipRow(
-                    icon = "👓",
-                    text = "Glasses may affect detection — try removing them"
-                )
-            }
-            // AD5S-165: hat/accessories tip
-            if (showHatsHint) {
-                TipRow(
-                    icon = "🎩",
-                    text = "Remove hats or accessories that cover your forehead"
-                )
-            }
         }
 
         Spacer(Modifier.weight(1f))
 
-        // ── NEXT button ───────────────────────────────────────────────────
+        if (showAccessoryWarning) {
+            AlertDialog(
+                onDismissRequest = { showAccessoryWarning = false },
+                title = { Text("Before you continue", fontWeight = FontWeight.Bold) },
+                text = {
+                    Text(
+                        "Glasses, hats, or accessories covering your face may affect expression detection. " +
+                        "For the best experience, consider removing them before playing.",
+                        fontSize = 14.sp
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showAccessoryWarning = false; onNext() },
+                        colors = ButtonDefaults.buttonColors(containerColor = FcBlue)
+                    ) {
+                        Text("Got it", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAccessoryWarning = false }) {
+                        Text("Go back", color = FcBlue)
+                    }
+                }
+            )
+        }
+
         Button(
-            onClick = onNext,
+            onClick = { showAccessoryWarning = true },
             enabled = allPassed,
             modifier = Modifier
                 .padding(horizontal = 52.dp)
@@ -296,7 +285,6 @@ fun FaceCheckScreen(onNext: () -> Unit) {
     }
 }
 
-// ── Reusable sub-composables ──────────────────────────────────────────────
 
 @Composable
 private fun StepDot(active: Boolean) {
@@ -354,18 +342,3 @@ private fun CheckRow(
     }
 }
 
-@Composable
-private fun TipRow(icon: String, text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFFF8DC), RoundedCornerShape(8.dp))
-            .border(1.dp, Color(0xFFE8D070), RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(icon, fontSize = 14.sp)
-        Spacer(Modifier.width(8.dp))
-        Text(text, color = Color(0xFF5C4500), fontSize = 11.sp)
-    }
-}

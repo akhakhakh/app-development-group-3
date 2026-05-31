@@ -15,15 +15,11 @@ class FaceAnalyzer(
 
     private val detector = FaceDetection.getClient(
         FaceDetectorOptions.Builder()
-            // High accuracy mode (vs FAST — better for demo)
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-            // Detect all 10 landmark points (eyes, nose, ears, mouth, cheeks)
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-            // Detect all 13 contour groups (face outline, eyebrows, eyes, lips, nose)
             .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-            // Enable smiling + eye-open probability classification
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-            // Assign a stable ID to each face across frames
+
             .enableTracking()
             .build()
     )

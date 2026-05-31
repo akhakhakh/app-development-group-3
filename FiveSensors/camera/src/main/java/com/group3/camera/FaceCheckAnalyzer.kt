@@ -11,7 +11,7 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 
 data class FaceCheckResult(
     val faces: List<Face>,
-    val avgBrightness: Float,   // 0..1  (AD5S-164)
+    val avgBrightness: Float,   
     val imageWidth: Int,
     val imageHeight: Int,
     val rotationDegrees: Int
@@ -34,8 +34,6 @@ class FaceCheckAnalyzer(
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image ?: run { imageProxy.close(); return }
 
-        // Sample ~200 pixels from Y (luminance) plane for brightness without
-        // consuming the buffer (uses absolute index get to leave position intact).
         val yBuffer = mediaImage.planes[0].buffer
         val yCapacity = yBuffer.remaining()
         val step = maxOf(1, yCapacity / 200)

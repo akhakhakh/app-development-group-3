@@ -54,7 +54,6 @@ fun CameraScreen() {
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // --- Camera preview ---
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).apply {
@@ -98,9 +97,7 @@ fun CameraScreen() {
             }
         )
 
-        // --- Face feature overlay ---
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // After ML Kit applies rotation, the logical image dimensions may be swapped
             val (logicalW, logicalH) = if (imageRotation == 90 || imageRotation == 270)
                 imageHeight to imageWidth
             else
@@ -111,12 +108,10 @@ fun CameraScreen() {
             }
         }
 
-        // --- Detection info panel (bottom) ---
         faces.firstOrNull()?.let { face ->
             FaceInfoPanel(face, modifier = Modifier.align(Alignment.BottomCenter))
         }
 
-        // "No face" hint when nothing is detected
         if (faces.isEmpty()) {
             Text(
                 text = "Point front camera at a face",
@@ -130,20 +125,12 @@ fun CameraScreen() {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Canvas drawing helpers
-// ---------------------------------------------------------------------------
-
 private fun DrawScope.drawFaceOverlay(face: Face, imageW: Int, imageH: Int) {
-    // Front camera mirror: flip X so overlay aligns with the mirrored preview
     fun toX(px: Float) = (1f - px / imageW) * size.width
     fun toY(py: Float) = (py / imageH) * size.height
     fun pt(p: PointF) = Offset(toX(p.x), toY(p.y))
 
-    // Bounding box (yellow)
     val box = face.boundingBox
-    // left/right swapped because of the front-camera mirror
     val left = toX(box.right.toFloat())
     val right = toX(box.left.toFloat())
     val top = toY(box.top.toFloat())
@@ -155,7 +142,6 @@ private fun DrawScope.drawFaceOverlay(face: Face, imageW: Int, imageH: Int) {
         style = Stroke(width = 4f)
     )
 
-    // Contours (cyan) — 13 contour groups trace the face geometry
     val contourTypes = listOf(
         FaceContour.FACE,
         FaceContour.LEFT_EYEBROW_TOP, FaceContour.LEFT_EYEBROW_BOTTOM,
@@ -170,23 +156,21 @@ private fun DrawScope.drawFaceOverlay(face: Face, imageW: Int, imageH: Int) {
         for (i in 0 until pts.size - 1) {
             drawLine(color = Color.Cyan, start = pt(pts[i]), end = pt(pts[i + 1]), strokeWidth = 2f)
         }
-        // Close loops for eye and face contours
         if (pts.size > 2 && type in listOf(FaceContour.FACE, FaceContour.LEFT_EYE, FaceContour.RIGHT_EYE)) {
             drawLine(color = Color.Cyan, start = pt(pts.last()), end = pt(pts.first()), strokeWidth = 2f)
         }
     }
-
-    // Landmarks (colored dots) — 10 named points
+    
     val landmarks = listOf(
-        FaceLandmark.LEFT_EYE to Color(0xFF4CAF50),       // green
+        FaceLandmark.LEFT_EYE to Color(0xFF4CAF50),    
         FaceLandmark.RIGHT_EYE to Color(0xFF4CAF50),
-        FaceLandmark.NOSE_BASE to Color(0xFFFF9800),       // orange
-        FaceLandmark.MOUTH_LEFT to Color(0xFFE91E63),      // pink
+        FaceLandmark.NOSE_BASE to Color(0xFFFF9800),      
+        FaceLandmark.MOUTH_LEFT to Color(0xFFE91E63),      
         FaceLandmark.MOUTH_RIGHT to Color(0xFFE91E63),
         FaceLandmark.MOUTH_BOTTOM to Color(0xFFE91E63),
-        FaceLandmark.LEFT_EAR to Color(0xFF9C27B0),        // purple
+        FaceLandmark.LEFT_EAR to Color(0xFF9C27B0),      
         FaceLandmark.RIGHT_EAR to Color(0xFF9C27B0),
-        FaceLandmark.LEFT_CHEEK to Color(0xFF2196F3),      // blue
+        FaceLandmark.LEFT_CHEEK to Color(0xFF2196F3),      
         FaceLandmark.RIGHT_CHEEK to Color(0xFF2196F3)
     )
     for ((type, color) in landmarks) {
@@ -195,10 +179,6 @@ private fun DrawScope.drawFaceOverlay(face: Face, imageW: Int, imageH: Int) {
         drawCircle(color = Color.White, radius = 10f, center = pt(position), style = Stroke(width = 2f))
     }
 }
-
-// ---------------------------------------------------------------------------
-// Info panel
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun FaceInfoPanel(face: Face, modifier: Modifier = Modifier) {
@@ -218,7 +198,6 @@ private fun FaceInfoPanel(face: Face, modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.height(8.dp))
 
-        // Classification
         SectionHeader("Classification")
         InfoRow("Smiling", face.smilingProbability.toPercent())
         InfoRow("Left eye open", face.leftEyeOpenProbability.toPercent())
@@ -226,7 +205,7 @@ private fun FaceInfoPanel(face: Face, modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(6.dp))
 
-        // Head pose (Euler angles)
+
         SectionHeader("Head Pose (Euler angles)")
         InfoRow("Pitch  (X) — nod up/down", "%.1f°".format(face.headEulerAngleX))
         InfoRow("Yaw    (Y) — turn left/right", "%.1f°".format(face.headEulerAngleY))
@@ -234,7 +213,6 @@ private fun FaceInfoPanel(face: Face, modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(6.dp))
 
-        // Tracking
         SectionHeader("Tracking")
         InfoRow("Face ID", face.trackingId?.toString() ?: "N/A")
         InfoRow(

@@ -26,6 +26,8 @@ import com.group3.camera.ui.theme.FiveSensorsTheme
 private sealed class Screen {
     object Landing : Screen()
     object FaceCheck : Screen()
+    object ExpressionTutorial : Screen()
+    object Game : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -40,7 +42,11 @@ class MainActivity : ComponentActivity() {
                         Screen.Landing ->
                             LandingScreen(onPlay = { screen = Screen.FaceCheck })
                         Screen.FaceCheck ->
-                            FaceCheckScreen(onNext = { /* TODO: navigate to Tutorial screen */ })
+                            FaceCheckScreen(onNext = { screen = Screen.ExpressionTutorial })
+                        Screen.ExpressionTutorial ->
+                            ExpressionTutorialScreen(onNext = { screen = Screen.Game })
+                        Screen.Game ->
+                            GameScreen(onGameEnd = {})
                     }
                 }
             }
