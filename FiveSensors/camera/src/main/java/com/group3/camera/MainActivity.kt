@@ -28,6 +28,7 @@ private sealed class Screen {
     object FaceCheck : Screen()
     object ExpressionTutorial : Screen()
     object Game : Screen()
+    object Results : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -46,7 +47,9 @@ class MainActivity : ComponentActivity() {
                         Screen.ExpressionTutorial ->
                             ExpressionTutorialScreen(onNext = { screen = Screen.Game })
                         Screen.Game ->
-                            GameScreen(onGameEnd = {})
+                            GameScreen(onGameEnd = { screen = Screen.Results })
+                        Screen.Results ->
+                            GameResultScreen(onPlayAgain = { screen = Screen.Landing })
                     }
                 }
             }

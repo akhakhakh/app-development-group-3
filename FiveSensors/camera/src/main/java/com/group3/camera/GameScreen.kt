@@ -1,8 +1,10 @@
 package com.group3.camera
 
+import android.graphics.Matrix
 import android.os.SystemClock
 import androidx.annotation.DrawableRes
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -50,22 +52,19 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 
-// ─── Timing constants ────────────────────────────────────────────────────────
 
 private const val BPM             = 90
-private val    BEAT_MS            = 60_000L / BPM   // 667 ms
-private const val LEAD_IN_BEATS   = 8               // 2 bars before first expression
-private const val COUNTDOWN_BEATS = 4               // 1 bar of countdown per expression
+private val    BEAT_MS            = 60_000L / BPM   
+private const val LEAD_IN_BEATS   = 8               
+private const val COUNTDOWN_BEATS = 4               
 
-// (expressionCount, restBeats after snap) — total = 20 expressions
 private val PHASES = listOf(
-    5 to 8,   // intro:  5 expressions, 8-beat (2-bar) gap  → ~8.0s each
-    7 to 4,   // build:  7 expressions, 4-beat (1-bar) gap  → ~5.3s each
-    6 to 2,   // peak:   6 expressions, 2-beat gap          → ~4.0s each
-    2 to 0,   // finale: 2 expressions, back-to-back        → ~2.7s each
+    5 to 8,  
+    7 to 4,   
+    6 to 2,   
+    2 to 0,   
 )
 
-// ─── Expression data ─────────────────────────────────────────────────────────
 
 private data class GameExpression(
     val name: String,
@@ -93,12 +92,10 @@ private val allGameExpressions = listOf(
     GameExpression("NEUTRAL",       R.drawable.emoticon_neutral),
 )
 
-// ─── Schedule ────────────────────────────────────────────────────────────────
-
 private data class ScheduledExpression(
     val expression: GameExpression,
-    val countdownStartBeat: Int,   // beat when the 4-beat countdown begins
-    val snapBeat: Int,             // countdownStartBeat + COUNTDOWN_BEATS
+    val countdownStartBeat: Int,  
+    val snapBeat: Int,             
 )
 
 private fun buildSchedule(): List<ScheduledExpression> {
@@ -128,14 +125,13 @@ private fun buildSchedule(): List<ScheduledExpression> {
     return schedule
 }
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
 
 @Composable
 fun GameScreen(onGameEnd: () -> Unit) {
     val context       = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val schedule     = remember { buildSchedule() }
+    val schedule     = remember { buildSchedule().also { GameResultStore.clear() } }
     val gameStartMs  = remember { SystemClock.elapsedRealtime() }
 
     var elapsedMs    by remember { mutableLongStateOf(0L) }
@@ -143,22 +139,49 @@ fun GameScreen(onGameEnd: () -> Unit) {
     var showFlash    by remember { mutableStateOf(false) }
     var isDone       by remember { mutableStateOf(false) }
 
-    // Smooth beat timer — always relative to gameStartMs so it never drifts
+    val captureTarget = remember { mutableStateOf<GameExpression?>(null) }
+
+    val analyzer = remember {
+        ImageAnalysis.Analyzer { imageProxy ->
+            val target = captureTarget.value
+            if (target != null) {
+                captureTarget.value = null
+                try {
+                    val raw    = imageProxy.toBitmap()
+                    val matrix = Matrix().apply { preScale(-1f, 1f) }
+                    val bmp    = android.graphics.Bitmap.createBitmap(
+                        raw, 0, 0, raw.width, raw.height, matrix, false
+                    )
+                    GameResultStore.add(
+                        sequenceIndex  = GameResultStore.results.size + 1,
+                        bitmap         = bmp,
+                        expressionName = target.name,
+                        drawableId     = target.drawableId,
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            imageProxy.close()
+        }
+    }
+
+  
     LaunchedEffect(Unit) {
         while (!isDone) {
             withFrameMillis { elapsedMs = SystemClock.elapsedRealtime() - gameStartMs }
         }
     }
 
-    // Snap scheduler — fires at the precise millisecond each snap is due
+
     LaunchedEffect(schedule) {
         for (i in schedule.indices) {
             val snapDueMs = schedule[i].snapBeat * BEAT_MS
             val waitMs    = snapDueMs - (SystemClock.elapsedRealtime() - gameStartMs)
             if (waitMs > 0) delay(waitMs)
 
+            captureTarget.value = schedule[i].expression
             showFlash = true
-            // TODO: capture camera frame here for scoring
             delay(180)
             showFlash = false
 
@@ -178,7 +201,6 @@ fun GameScreen(onGameEnd: () -> Unit) {
         onDispose { ProcessCameraProvider.getInstance(context).get().unbindAll() }
     }
 
-    // ── Derived state ──────────────────────────────────────────────────────
 
     val fractBeat = elapsedMs.toFloat() / BEAT_MS
     val currentScheduled = schedule.getOrNull(snappedCount)
@@ -189,7 +211,9 @@ fun GameScreen(onGameEnd: () -> Unit) {
         fractBeat >= currentScheduled.countdownStartBeat &&
         fractBeat <  currentScheduled.snapBeat
 
-    // 1.0 = full bar / snap hasn't happened yet, 0.0 = snap moment
+    val totalGameMs    = schedule.last().snapBeat * BEAT_MS
+    val songProgress   = (elapsedMs.toFloat() / totalGameMs).coerceIn(0f, 1f)
+
     val countdownProgress = when {
         isLeadIn      -> 1f
         isInCountdown -> {
@@ -199,11 +223,9 @@ fun GameScreen(onGameEnd: () -> Unit) {
         else -> 0f
     }
 
-    // ── UI ─────────────────────────────────────────────────────────────────
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // Camera preview (full screen background)
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).apply {
@@ -218,17 +240,20 @@ fun GameScreen(onGameEnd: () -> Unit) {
                     val cameraProvider = future.get()
                     val preview = Preview.Builder().build()
                         .also { it.setSurfaceProvider(previewView.surfaceProvider) }
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                        .also { it.setAnalyzer(ContextCompat.getMainExecutor(context), analyzer) }
                     cameraProvider.unbindAll()
                     try {
                         cameraProvider.bindToLifecycle(
-                            lifecycleOwner, CameraSelector.DEFAULT_FRONT_CAMERA, preview
+                            lifecycleOwner, CameraSelector.DEFAULT_FRONT_CAMERA,
+                            preview, imageAnalysis
                         )
                     } catch (e: Exception) { e.printStackTrace() }
                 }, ContextCompat.getMainExecutor(context))
             }
         )
-
-        // Snap flash
         if (showFlash) {
             Box(
                 modifier = Modifier
@@ -237,7 +262,6 @@ fun GameScreen(onGameEnd: () -> Unit) {
             )
         }
 
-        // Top HUD
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -259,18 +283,13 @@ fun GameScreen(onGameEnd: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     isInCountdown -> {
-                        // beats remaining: 3 on first beat, 2, 1, then SNAP on last
                         val beatInWindow = (fractBeat - currentScheduled!!.countdownStartBeat).toInt()
-                        val label = when (COUNTDOWN_BEATS - beatInWindow) {
-                            in 3..Int.MAX_VALUE -> "3"
-                            2                  -> "2"
-                            1                  -> "1"
-                            else               -> "SNAP"
-                        }
+                        val isSnap = beatInWindow >= COUNTDOWN_BEATS - 1
+                        val label = if (isSnap) "SNAP" else (COUNTDOWN_BEATS - 1 - beatInWindow).toString()
                         Text(
-                            label,
-                            color = if (label == "SNAP") Color(0xFFFAD12E) else Color.White,
-                            fontSize = if (label == "SNAP") 18.sp else 22.sp,
+                            text = label,
+                            color = if (isSnap) Color(0xFFFAD12E) else Color.White,
+                            fontSize = if (isSnap) 18.sp else 22.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -282,7 +301,6 @@ fun GameScreen(onGameEnd: () -> Unit) {
                 }
             }
 
-            // Countdown progress bar: blue → yellow as it empties
             val barColor = if (countdownProgress > 0.3f) Color(0xFF3885F0) else Color(0xFFFAD12E)
             Box(
                 modifier = Modifier
@@ -297,9 +315,22 @@ fun GameScreen(onGameEnd: () -> Unit) {
                         .background(barColor, RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp))
                 )
             }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(Color.White.copy(alpha = 0.12f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(songProgress)
+                        .background(Color.White.copy(alpha = 0.35f))
+                )
+            }
         }
 
-        // Bottom conveyor
         GameConveyor(
             schedule     = schedule,
             currentIdx   = snappedCount,
@@ -311,7 +342,6 @@ fun GameScreen(onGameEnd: () -> Unit) {
     }
 }
 
-// ─── Conveyor ────────────────────────────────────────────────────────────────
 
 @Composable
 private fun GameConveyor(
@@ -338,7 +368,7 @@ private fun GameConveyor(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Active card
+
             schedule.getOrNull(currentIdx)?.let { active ->
                 ExpressionQueueCard(
                     expr     = active.expression,
@@ -347,7 +377,6 @@ private fun GameConveyor(
                 )
             }
 
-            // Up to 3 upcoming cards
             for (offset in 1..3) {
                 schedule.getOrNull(currentIdx + offset)?.let { upcoming ->
                     ExpressionQueueCard(
@@ -363,7 +392,7 @@ private fun GameConveyor(
 
         Spacer(Modifier.height(8.dp))
 
-        // Game progress bar
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
