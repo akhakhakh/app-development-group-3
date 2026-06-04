@@ -8,6 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import android.content.Intent
+import com.group3.touchscreen1p.ui.GameActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,7 +38,9 @@ class MainActivity : AppCompatActivity() {
         val howToPlayButton = findViewById<LinearLayout>(R.id.howToPlayButton)
 
         playButton.setOnClickListener {
-            Toast.makeText(this, "Start Game", Toast.LENGTH_SHORT).show()
+            startActivity(
+                Intent(this, GameActivity::class.java)
+            )
         }
 
         settingsButton.setOnClickListener {
