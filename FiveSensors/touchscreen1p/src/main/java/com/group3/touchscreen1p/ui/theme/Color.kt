@@ -1,20 +1,14 @@
 package com.group3.touchscreen1p.ui.theme
 
-import android.graphics.Color
+import androidx.compose.ui.graphics.Color
 
-object AppColors {
+val BackgroundDark = Color(0xFF0A0A1A)
+val BackgroundSurface = Color(0xFF1A0A2E)
 
-    const val BACKGROUND = "#0A0A1A"
+val NeonBlue = Color(0xFF00FFFF)
+val NeonPurple = Color(0xFFA855F7)
+val ReactorPink = Color(0xFFFF00FF)
+val ReactorYellow = Color(0xFFFFFF00)
 
-    const val CYAN = "#00FFFF"
-
-    const val PURPLE = "#A855F7"
-
-    const val PINK = "#FF00FF"
-
-    const val YELLOW = "#FFFF00"
-
-    const val TEXT_PRIMARY = "#FFFFFF"
-
-    const val TEXT_SECONDARY = "#BDBDBD"
-}
+val TextPrimary = Color(0xFFFFFFFF)
+val TextSecondary = Color(0xFFBDBDBD)
