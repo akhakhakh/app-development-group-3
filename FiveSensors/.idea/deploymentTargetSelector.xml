@@ -6,26 +6,6 @@
         <option name="selectionMode" value="DROPDOWN" />
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="touchscreen1p">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="touchscreen2p">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="microphone">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="camera">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="gyroscope">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DialogSelection />
-      </SelectionState>
     </selectionStates>
   </component>
 </project>
