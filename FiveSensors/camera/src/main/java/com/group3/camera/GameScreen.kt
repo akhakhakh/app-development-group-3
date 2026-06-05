@@ -1,7 +1,12 @@
 package com.group3.camera
 
+import android.content.Context
 import android.graphics.Matrix
+import android.os.Build
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.annotation.DrawableRes
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -194,6 +199,33 @@ fun GameScreen(onGameEnd: () -> Unit) {
         if (isDone) {
             delay(600)
             onGameEnd()
+        }
+    }
+
+    
+    val vibrator = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+    }
+
+    LaunchedEffect(schedule) {
+        for (scheduled in schedule) {
+            for (beat in 0 until COUNTDOWN_BEATS) {
+                val beatTimeMs = (scheduled.countdownStartBeat + beat) * BEAT_MS
+                val waitMs     = beatTimeMs - (SystemClock.elapsedRealtime() - gameStartMs)
+                if (waitMs > 0) delay(waitMs)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(80L, 255))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(80L)
+                }
+            }
         }
     }
 

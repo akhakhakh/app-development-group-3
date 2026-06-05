@@ -171,7 +171,6 @@ fun GameResultScreen(onPlayAgain: () -> Unit) {
             ) {
                 Spacer(Modifier.height(24.dp))
 
-                // Grade
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
