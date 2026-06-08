@@ -8,6 +8,7 @@ data class FloatingEffect(
     val normalizedX: Float,
     val normalizedY: Float,
     val player: Int,
+    val type: TargetType = TargetType.BULLSEYE,
     val startTimeMs: Long, // fading duration is calculated from start time
 
 )
