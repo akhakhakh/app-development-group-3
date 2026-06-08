@@ -20,7 +20,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +35,6 @@ import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.NavyCard
-import com.group3.touchscreen2p.ui.theme.NavySurface
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
 import com.group3.touchscreen2p.ui.theme.RedDanger
 import com.group3.touchscreen2p.ui.theme.WhitePrimary
@@ -45,6 +43,7 @@ import com.group3.touchscreen2p.ui.theme.YellowAccent
 @Composable
 fun HomeScreen(
     onPlayClick: () -> Unit,
+    onHowToPlayClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -136,7 +135,7 @@ fun HomeScreen(
 
             // --- HOW TO PLAY button ---
             OutlinedButton(
-                onClick  = { /* Sprint 2 */ },
+                onClick  = onHowToPlayClick,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
             ) {
