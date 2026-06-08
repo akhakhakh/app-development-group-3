@@ -1,5 +1,6 @@
 package com.group3.touchscreen2p.ui
 
+import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -17,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -148,6 +151,26 @@ fun GameScreen(
                     size = Size(targetRadiusPx * 2f, targetRadiusPx * 2f),
                     style = Stroke(width = 3.5.dp.toPx())
                 )
+            }
+
+            // Floating effects
+            val now = SystemClock.elapsedRealtime()
+            state.floatingEffects.forEach { effect ->
+                val progress = ((now - effect.startTimeMs) /
+                        Constants.FLOATING_EFFECT_DURATION_MS.toFloat()).coerceIn(0f, 1f)
+                val cx = effect.normalizedX * size.width
+                val cy = effect.normalizedY * size.height - (with(density) { 60.dp.toPx() } * progress)
+                val effectColor = if (effect.player == 1) OrangePlayer1 else BluePlayer2
+
+                drawIntoCanvas { canvas ->
+                    val paint = android.graphics.Paint().apply {
+                        color = effectColor.copy(alpha = 1f - progress).toArgb()
+                        textSize = with(density) { 20.sp.toPx() }
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        isFakeBoldText = true
+                    }
+                    canvas.nativeCanvas.drawText(effect.text, cx, cy, paint)
+                }
             }
         }
 
