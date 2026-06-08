@@ -11,15 +11,15 @@ val BlueDivider    = Color(0xFF1E2A4A)
 
 
 // Brand
-val YellowAccent   = Color(0xFFFFD60A)
-val WhitePrimary   = Color(0xFFFFFFFF)
+val Yellow   = Color(0xFFFFD60A)
+val White   = Color(0xFFFFFFFF)
 
 // Players
 val OrangePlayer1  = Color(0xFFFF6B35)
 val BluePlayer2    = Color(0xFF4A90D9)
 
-// Danger
-val RedDanger      = Color(0xFFFF3B30)
+// Bomb
+val BombRed        = Color(0xFFFF3B30)
 
 // Target rings (outer to inner)
 val TargetRingOuter = Color(0xFF1E3A5F)
