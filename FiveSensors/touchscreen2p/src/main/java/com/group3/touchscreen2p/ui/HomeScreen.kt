@@ -45,6 +45,7 @@ import com.group3.touchscreen2p.ui.theme.YellowAccent
 @Composable
 fun HomeScreen(
     onPlayClick: () -> Unit,
+    onHowToPlayClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -136,7 +137,7 @@ fun HomeScreen(
 
             // --- HOW TO PLAY button ---
             OutlinedButton(
-                onClick  = { /* Sprint 2 */ },
+                onClick  = onHowToPlayClick,
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 border   = BorderStroke(3.dp, BlueBorder),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
