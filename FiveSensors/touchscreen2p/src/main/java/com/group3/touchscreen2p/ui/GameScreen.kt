@@ -165,7 +165,7 @@ fun GameScreen(
                         cy + r * 0.35f * 0.4f, // vertically center in the bullseye
                         Paint().apply {
                             this.color = if (label == "!") Color.WHITE else Color.BLACK
-                            textSize = targetRadiusPx * 0.45f
+                            textSize = r * 0.45f
                             textAlign = Paint.Align.CENTER
                             isFakeBoldText = true
                         }

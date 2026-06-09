@@ -1,5 +1,6 @@
 package com.group3.touchscreen2p.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.group3.touchscreen2p.ui.theme.BlueBorder
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.GreyText
@@ -97,7 +99,7 @@ fun GameOverScreen(
 
         Button(
             onClick = onPlayAgain,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Yellow,
                 contentColor = NavyBackground
@@ -110,8 +112,9 @@ fun GameOverScreen(
 
         OutlinedButton(
             onClick = onHome,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = White)
+            modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = White),
+            border   = BorderStroke(3.dp, BlueBorder),
         ) {
             Text(text = "HOME", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
