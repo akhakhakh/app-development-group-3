@@ -1,5 +1,6 @@
 package com.group3.touchscreen2p.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +21,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,12 +31,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.group3.touchscreen2p.ui.theme.BlueBorder
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.NavyCard
-import com.group3.touchscreen2p.ui.theme.NavySurface
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
 import com.group3.touchscreen2p.ui.theme.RedDanger
 import com.group3.touchscreen2p.ui.theme.WhitePrimary
@@ -56,7 +56,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
+                .padding(horizontal = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -122,7 +122,7 @@ fun HomeScreen(
             // --- PLAY button ---
             Button(
                 onClick = onPlayClick,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = YellowAccent,
                     contentColor = NavyBackground
@@ -137,7 +137,8 @@ fun HomeScreen(
             // --- HOW TO PLAY button ---
             OutlinedButton(
                 onClick  = { /* Sprint 2 */ },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
+                border   = BorderStroke(3.dp, BlueBorder),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
             ) {
                 Text(
@@ -149,7 +150,8 @@ fun HomeScreen(
             // --- SETTINGS button ---
             OutlinedButton(
                 onClick  = { /* Sprint 2 */ },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
+                border   = BorderStroke(3.dp, BlueBorder),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
             ) {
                 Text(
@@ -158,6 +160,8 @@ fun HomeScreen(
                     fontWeight = FontWeight.SemiBold
                 )
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // --- Footer hint ---
             Text(
