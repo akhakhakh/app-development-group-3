@@ -92,21 +92,35 @@ class GameViewModel : ViewModel() {
             val specialsEnabled = maxOf(s.score1, s.score2) >= Constants.SPECIALS_UNLOCK_SCORE
 
             if (list.count { it.player == 1 } < Constants.MAX_TARGETS_PER_PLAYER) {
-                list = list + buildTarget(player = 1, now = now, specialsEnabled = specialsEnabled)
+                list = list + buildTarget(player = 1, now = now, specialsEnabled =
+                    specialsEnabled, existing = list)
             }
             if (list.count { it.player == 2 } < Constants.MAX_TARGETS_PER_PLAYER) {
-                list = list + buildTarget(player = 2, now = now, specialsEnabled = specialsEnabled)
+                list = list + buildTarget(player = 2, now = now, specialsEnabled =
+                    specialsEnabled, existing = list)
             }
 
             s.copy(targets = list)
         }
     }
 
-    private fun buildTarget(player: Int, now: Long, specialsEnabled: Boolean): Target {
-        val x = Random.nextFloat() * (Constants.SPAWN_X_MAX - Constants.SPAWN_X_MIN) + Constants.SPAWN_X_MIN
-        val yMin = if (player == 1) Constants.SPAWN_Y_P1_MIN else Constants.SPAWN_Y_P2_MIN
+    private fun buildTarget(player: Int, now: Long, specialsEnabled: Boolean,
+                            existing: List<Target>): Target {
+           val yMin = if (player == 1) Constants.SPAWN_Y_P1_MIN else Constants.SPAWN_Y_P2_MIN
         val yMax = if (player == 1) Constants.SPAWN_Y_P1_MAX else Constants.SPAWN_Y_P2_MAX
-        val y = Random.nextFloat() * (yMax - yMin) + yMin
+        var x: Float
+        var y: Float
+        var attempts = 0
+        do {
+            x = Random.nextFloat() * (Constants.SPAWN_X_MAX - Constants.SPAWN_X_MIN)+
+                    Constants.SPAWN_X_MIN
+            y = Random.nextFloat() * (yMax - yMin) + yMin
+            attempts++
+        } while (attempts < 10 && existing.any { t ->
+                val dx = x - t.normalizedX
+                val dy = y - t.normalizedY
+                dx * dx + dy * dy < Constants.TARGET_MIN_SPACING * Constants.TARGET_MIN_SPACING
+            })
         val type = if (!specialsEnabled) { TargetType.BULLSEYE
         } else {
             when (Random.nextInt(10)) {

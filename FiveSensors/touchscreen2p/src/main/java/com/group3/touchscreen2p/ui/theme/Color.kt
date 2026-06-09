@@ -24,10 +24,5 @@ val BluePlayer2    = Color(0xFF4A90D9)
 // Bomb
 val BombRed        = Color(0xFFFF3B30)
 
-// Target rings (outer to inner)
-val TargetRingOuter = Color(0xFF1E3A5F)
-val TargetRingMid   = Color(0xFF2E6DB4)
-val TargetRingInner = Color(0xFFFFFFFF)
-
 // Overlay
 val DimOverlay = Color(0xB3000000)
