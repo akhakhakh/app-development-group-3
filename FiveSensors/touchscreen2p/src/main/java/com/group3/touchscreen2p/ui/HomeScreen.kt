@@ -1,5 +1,6 @@
 package com.group3.touchscreen2p.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.group3.touchscreen2p.ui.theme.BlueBorder
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.GreyText
@@ -55,7 +57,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
+                .padding(horizontal = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -121,7 +123,7 @@ fun HomeScreen(
             // --- PLAY button ---
             Button(
                 onClick = onPlayClick,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Yellow,
                     contentColor = NavyBackground
@@ -136,8 +138,9 @@ fun HomeScreen(
             // --- HOW TO PLAY button ---
             OutlinedButton(
                 onClick  = onHowToPlayClick,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = White)
+                modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
+                border   = BorderStroke(3.dp, BlueBorder),
             ) {
                 Text(
                     text = "HOW TO PLAY",
@@ -148,8 +151,9 @@ fun HomeScreen(
             // --- SETTINGS button ---
             OutlinedButton(
                 onClick  = { /* Sprint 2 */ },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = White)
+                modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
+                border   = BorderStroke(3.dp, BlueBorder),
             ) {
                 Text(
                     text  = "SETTINGS",
@@ -157,6 +161,8 @@ fun HomeScreen(
                     fontWeight = FontWeight.SemiBold
                 )
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // --- Footer hint ---
             Text(

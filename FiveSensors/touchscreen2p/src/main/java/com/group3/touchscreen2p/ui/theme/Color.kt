@@ -2,6 +2,9 @@ package com.group3.touchscreen2p.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Button
+val BlueBorder = Color(0xFF334070)
+
 // Background
 val NavyBackground = Color(0xFF0A0E21)
 val NavySurface    = Color(0xFF111827)
