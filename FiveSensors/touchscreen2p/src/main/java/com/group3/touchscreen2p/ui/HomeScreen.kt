@@ -38,9 +38,9 @@ import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.NavyCard
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
-import com.group3.touchscreen2p.ui.theme.RedDanger
-import com.group3.touchscreen2p.ui.theme.WhitePrimary
-import com.group3.touchscreen2p.ui.theme.YellowAccent
+import com.group3.touchscreen2p.ui.theme.BombRed
+import com.group3.touchscreen2p.ui.theme.White
+import com.group3.touchscreen2p.ui.theme.Yellow
 
 @Composable
 fun HomeScreen(
@@ -71,7 +71,7 @@ fun HomeScreen(
                 text = "TAP",
                 fontSize = 52.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = WhitePrimary,
+                color = White,
                 letterSpacing = 2.sp,
                 textAlign = TextAlign.Center
             )
@@ -79,7 +79,7 @@ fun HomeScreen(
                 text = "BATTLE",
                 fontSize = 52.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = YellowAccent,
+                color = Yellow,
                 letterSpacing = 2.sp,
                 textAlign = TextAlign.Center
             )
@@ -91,7 +91,7 @@ fun HomeScreen(
                 text = "2   PLAYERS",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
-                color = YellowAccent,
+                color = Yellow,
                 letterSpacing = 6.sp,
                 textAlign = TextAlign.Center
             )
@@ -125,7 +125,7 @@ fun HomeScreen(
                 onClick = onPlayClick,
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = YellowAccent,
+                    containerColor = Yellow,
                     contentColor = NavyBackground
                 )
             ) {
@@ -138,9 +138,9 @@ fun HomeScreen(
             // --- HOW TO PLAY button ---
             OutlinedButton(
                 onClick  = onHowToPlayClick,
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = White)
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 border   = BorderStroke(3.dp, BlueBorder),
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
             ) {
                 Text(
                     text = "HOW TO PLAY",
@@ -151,9 +151,9 @@ fun HomeScreen(
             // --- SETTINGS button ---
             OutlinedButton(
                 onClick  = { /* Sprint 2 */ },
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = White)
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 border   = BorderStroke(3.dp, BlueBorder),
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
             ) {
                 Text(
                     text  = "SETTINGS",
@@ -189,7 +189,7 @@ private fun AppIcon() {
             .size(100.dp)
             .clip(RoundedCornerShape(22.dp))
             .background(NavyCard)
-            .border(2.dp, YellowAccent, RoundedCornerShape(22.dp)),
+            .border(2.dp, Yellow, RoundedCornerShape(22.dp)),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -204,7 +204,7 @@ private fun AppIcon() {
                 modifier = Modifier
                     .size(12.dp)
                     .clip(CircleShape)
-                    .background(RedDanger)
+                    .background(BombRed)
                     .zIndex(1f)
             )
 
@@ -225,7 +225,7 @@ private fun PlayerSilhouette() {
             modifier = Modifier
                 .size(18.dp)
                 .clip(CircleShape)
-                .background(YellowAccent)
+                .background(Yellow)
         )
         // Body
         Box(
@@ -233,7 +233,7 @@ private fun PlayerSilhouette() {
                 .width(22.dp)
                 .height(26.dp)
                 .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomStart = 4.dp, bottomEnd = 4.dp))
-                .background(YellowAccent)
+                .background(Yellow)
         )
     }
 }
@@ -246,8 +246,8 @@ private fun TargetLegend() {
     ) {
         LegendItem(color = OrangePlayer1,    label = "P1 TARGET", value = "+1")
         LegendItem(color = BluePlayer2,    label = "P2 TARGET", value = "+1")
-        LegendItem(color = YellowAccent,   label = "TRICK", value = "TARGET-1")
-        LegendItem(color = RedDanger,  label = "BOMB", value = "TARGET -2")
+        LegendItem(color = Yellow,   label = "TRICK", value = "TARGET-1")
+        LegendItem(color = BombRed,  label = "BOMB", value = "TARGET -2")
     }
 }
 

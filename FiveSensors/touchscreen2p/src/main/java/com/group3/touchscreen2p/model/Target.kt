@@ -12,4 +12,5 @@ data class Target(
     val spawnTimeMs: Long,
     val lifetimeMs: Long = Constants.TARGET_LIFETIME_MS,
     val progress: Float = 1f,
+    val type: TargetType = TargetType.BULLSEYE
 )

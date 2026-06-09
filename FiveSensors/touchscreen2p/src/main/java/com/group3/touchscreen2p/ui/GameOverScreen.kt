@@ -26,8 +26,8 @@ import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
-import com.group3.touchscreen2p.ui.theme.WhitePrimary
-import com.group3.touchscreen2p.ui.theme.YellowAccent
+import com.group3.touchscreen2p.ui.theme.White
+import com.group3.touchscreen2p.ui.theme.Yellow
 
 @Composable
 fun GameOverScreen(
@@ -99,7 +99,7 @@ fun GameOverScreen(
             onClick = onPlayAgain,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = YellowAccent,
+                containerColor = Yellow,
                 contentColor = NavyBackground
             )
         ) {
@@ -111,7 +111,7 @@ fun GameOverScreen(
         OutlinedButton(
             onClick = onHome,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = WhitePrimary)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = White)
         ) {
             Text(text = "HOME", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }

@@ -17,6 +17,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 import com.group3.touchscreen2p.model.Target
+import com.group3.touchscreen2p.model.TargetType
 
 class GameViewModel : ViewModel() {
     private val _state = MutableStateFlow(GameState())
@@ -105,9 +106,14 @@ class GameViewModel : ViewModel() {
         val yMin = if (player == 1) Constants.SPAWN_Y_P1_MIN else Constants.SPAWN_Y_P2_MIN
         val yMax = if (player == 1) Constants.SPAWN_Y_P1_MAX else Constants.SPAWN_Y_P2_MAX
         val y = Random.nextFloat() * (yMax - yMin) + yMin
+        val type = when (Random.nextInt(10)) {
+            in 0..6 -> TargetType.BULLSEYE // 70%
+            in 7..8 -> TargetType.TRICK // 20%
+            else -> TargetType.BOMB // 10%
+        }
 
         return Target(
-            player = player, normalizedX = x, normalizedY = y, spawnTimeMs = now
+            player = player, normalizedX = x, normalizedY = y, spawnTimeMs = now, type = type
         )
     }
 
@@ -115,7 +121,11 @@ class GameViewModel : ViewModel() {
         if (_state.value.phase != Phase.PLAYING) return
 
         _state.update { s ->
-            val points = Constants.POINTS_BULLSEYE
+            val points = when (target.type) {
+                TargetType.BULLSEYE -> Constants.POINTS_BULLSEYE
+                TargetType.TRICK -> Constants.POINTS_TRICK
+                TargetType.BOMB -> Constants.POINTS_BOMB
+            }
 
             val newScore1 = if (player == 1) (s.score1 + points).coerceAtLeast(Constants.MIN_SCORE)
             else s.score1
@@ -126,10 +136,11 @@ class GameViewModel : ViewModel() {
             val newTargets = s.targets.filter { it.id != target.id }
 
             val effect = FloatingEffect(
-                text = "+$points",
+                text = if (points >= 0) "+$points" else "$points",
                 normalizedX = normX,
                 normalizedY = normY,
                 player = player,
+                type = target.type,
                 startTimeMs = SystemClock.elapsedRealtime()
             )
 

@@ -31,9 +31,9 @@ import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.NavyCard
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
-import com.group3.touchscreen2p.ui.theme.RedDanger
-import com.group3.touchscreen2p.ui.theme.WhitePrimary
-import com.group3.touchscreen2p.ui.theme.YellowAccent
+import com.group3.touchscreen2p.ui.theme.BombRed
+import com.group3.touchscreen2p.ui.theme.White
+import com.group3.touchscreen2p.ui.theme.Yellow
 
 @Composable
 fun HowToPlayScreen(onBack: () -> Unit) {
@@ -49,7 +49,7 @@ fun HowToPlayScreen(onBack: () -> Unit) {
             text = "HOW TO PLAY",
             fontSize = 28.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = WhitePrimary,
+            color = White,
             letterSpacing = 4.sp
         )
 
@@ -81,23 +81,15 @@ fun HowToPlayScreen(onBack: () -> Unit) {
 
         StepCard(
             number = "4",
-            title = "TRICK TARGET",
-            description = "A trick target will spawns randomly on each side. You will lose 1 point if you tap them."
+            title = "TRICK & BOMB TARGET",
+            description = "A trick or bomb target will spawns randomly on each side. You will " +
+                    "lose points if you tap them."
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         StepCard(
             number = "5",
-            title = "BOMB TARGET",
-            description = "A bomb target will spawns randomly on each side. You will lose 2 point if you tap them. "
-        )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        StepCard(
-            number = "6",
             title = "FIRST TO 10 WINS",
             description = "Race to 10 points before your opponent."
         )
@@ -116,18 +108,18 @@ fun HowToPlayScreen(onBack: () -> Unit) {
 
         ColorRow(color = OrangePlayer1, label = "Player 1 target -> +1 points")
         Spacer(modifier = Modifier.height(8.dp))
-        ColorRow(color = BluePlayer2,   label = "Player 2 target -> +1 points")
+        ColorRow(color = BluePlayer2, label = "Player 2 target -> +1 points")
         Spacer(modifier = Modifier.height(8.dp))
-        ColorRow(color = YellowAccent,  label = "Trick target  →  -1 point if tapped")
+        ColorRow(color = Yellow, label = "Trick target → -1 points")
         Spacer(modifier = Modifier.height(8.dp))
-        ColorRow(color = RedDanger,     label = "Bomb  →  -2 points if tapped")
+        ColorRow(color = BombRed, label = "Bomb → -2 points")
         Spacer(modifier = Modifier.height(40.dp))
 
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = YellowAccent,
+                containerColor = Yellow,
                 contentColor = NavyBackground
             )
         ) {
@@ -150,7 +142,7 @@ private fun StepCard(number: String, title: String, description: String) {
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(YellowAccent),
+                .background(Yellow),
             contentAlignment = Alignment.Center
         ) {
             Text(text = number, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = NavyBackground)
@@ -159,9 +151,9 @@ private fun StepCard(number: String, title: String, description: String) {
         Spacer(modifier = Modifier.width(16.dp))
 
         Column {
-            Text(text = title, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = YellowAccent, letterSpacing = 1.sp)
+            Text(text = title, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Yellow, letterSpacing = 1.sp)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = description, fontSize = 13.sp, color = WhitePrimary, lineHeight = 20.sp)
+            Text(text = description, fontSize = 13.sp, color = White, lineHeight = 20.sp)
         }
     }
 }
@@ -174,6 +166,6 @@ private fun ColorRow(color: Color, label: String) {
     ) {
         Box(modifier = Modifier.size(14.dp).clip(CircleShape).background(color))
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text = label, fontSize = 13.sp, color = WhitePrimary)
+        Text(text = label, fontSize = 13.sp, color = White)
     }
 }
