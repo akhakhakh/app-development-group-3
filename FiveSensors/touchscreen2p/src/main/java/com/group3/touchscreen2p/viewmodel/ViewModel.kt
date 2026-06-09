@@ -136,7 +136,11 @@ class GameViewModel : ViewModel() {
             val newTargets = s.targets.filter { it.id != target.id }
 
             val effect = FloatingEffect(
-                text = if (points >= 0) "+$points" else "$points",
+                text = when (target.type) {
+                    TargetType.TRICK -> "-1 TRICK!"
+                    TargetType.BOMB -> "-2 BOOM!"
+                    TargetType.BULLSEYE -> "+1"
+                },
                 normalizedX = normX,
                 normalizedY = normY,
                 player = player,
