@@ -1,5 +1,7 @@
 package com.group3.touchscreen2p.ui
 
+import android.graphics.Color
+import android.graphics.Paint
 import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -31,13 +33,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.group3.touchscreen2p.Constants
 import com.group3.touchscreen2p.model.Phase
+import com.group3.touchscreen2p.model.TargetType
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
+import com.group3.touchscreen2p.ui.theme.BombRed
 import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.NavySurface
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
-import com.group3.touchscreen2p.ui.theme.YellowAccent
+import com.group3.touchscreen2p.ui.theme.Yellow
 import com.group3.touchscreen2p.viewmodel.GameViewModel
 
 @Composable
@@ -115,8 +119,11 @@ fun GameScreen(
             state.targets.forEach { target ->
                 val cx = target.normalizedX * size.width
                 val cy = target.normalizedY * size.height
-                val color = if (target.player == 1) OrangePlayer1 else
-                    BluePlayer2
+                val color = when (target.type) {
+                    TargetType.BULLSEYE -> if (target.player == 1) OrangePlayer1 else BluePlayer2
+                    TargetType.TRICK -> Yellow
+                    TargetType.BOMB -> BombRed
+                }
 
                 // Outer ring
                 drawCircle(
@@ -141,6 +148,27 @@ fun GameScreen(
                     center = Offset(cx, cy)
                 )
 
+                // Label for special targets
+                val label = when (target.type) {
+                    TargetType.TRICK -> "!"
+                    TargetType.BOMB  -> "X"
+                    else             -> null
+                }
+                if (label != null) {
+                    drawContext.canvas.nativeCanvas.drawText(
+                        label,
+                        cx,
+                        cy + targetRadiusPx * 0.35f * 0.4f, // vertically center in the bullseye
+                        Paint().apply {
+                            this.color = if (label == "!") Color.WHITE else Color.BLACK
+                            textSize = targetRadiusPx * 0.45f
+                            textAlign = Paint.Align.CENTER
+                            isFakeBoldText = true
+                        }
+                    )
+                }
+
+
                 // Timer arc — starts full, shrinks to 0 as target expires
                 drawArc(
                     color = color,
@@ -160,13 +188,17 @@ fun GameScreen(
                         Constants.FLOATING_EFFECT_DURATION_MS.toFloat()).coerceIn(0f, 1f)
                 val cx = effect.normalizedX * size.width
                 val cy = effect.normalizedY * size.height - (with(density) { 60.dp.toPx() } * progress)
-                val effectColor = if (effect.player == 1) OrangePlayer1 else BluePlayer2
+                val effectColor = when (effect.type) {
+                    TargetType.BULLSEYE -> if (effect.player == 1) OrangePlayer1 else BluePlayer2
+                    TargetType.TRICK -> Yellow
+                    TargetType.BOMB -> BombRed
+                }
 
                 drawIntoCanvas { canvas ->
-                    val paint = android.graphics.Paint().apply {
+                    val paint = Paint().apply {
                         color = effectColor.copy(alpha = 1f - progress).toArgb()
                         textSize = with(density) { 20.sp.toPx() }
-                        textAlign = android.graphics.Paint.Align.CENTER
+                        textAlign = Paint.Align.CENTER
                         isFakeBoldText = true
                     }
                     canvas.nativeCanvas.drawText(effect.text, cx, cy, paint)
@@ -207,7 +239,7 @@ fun GameScreen(
                     text = "${state.countdownValue}",
                     fontSize = 96.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = YellowAccent.copy(alpha = 0.85f)
+                    color = Yellow.copy(alpha = 0.85f)
                 )
             }
         }
@@ -249,7 +281,7 @@ private fun PlayerHud(
                 text = "$countdownValue",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = YellowAccent,
+                color = Yellow,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
         } else {

@@ -81,23 +81,15 @@ fun HowToPlayScreen(onBack: () -> Unit) {
 
         StepCard(
             number = "4",
-            title = "TRICK TARGET",
-            description = "A trick target will spawns randomly on each side. You will lose 1 point if you tap them."
+            title = "TRICK & BOMB TARGET",
+            description = "A trick or bomb target will spawns randomly on each side. You will " +
+                    "lose points if you tap them."
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         StepCard(
             number = "5",
-            title = "BOMB TARGET",
-            description = "A bomb target will spawns randomly on each side. You will lose 2 point if you tap them. "
-        )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        StepCard(
-            number = "6",
             title = "FIRST TO 10 WINS",
             description = "Race to 10 points before your opponent."
         )
@@ -116,11 +108,11 @@ fun HowToPlayScreen(onBack: () -> Unit) {
 
         ColorRow(color = OrangePlayer1, label = "Player 1 target -> +1 points")
         Spacer(modifier = Modifier.height(8.dp))
-        ColorRow(color = BluePlayer2,   label = "Player 2 target -> +1 points")
+        ColorRow(color = BluePlayer2, label = "Player 2 target -> +1 points")
         Spacer(modifier = Modifier.height(8.dp))
-        ColorRow(color = Yellow,  label = "Trick target  →  -1 point if tapped")
+        ColorRow(color = Yellow, label = "Trick target → -1 points")
         Spacer(modifier = Modifier.height(8.dp))
-        ColorRow(color = BombRed,     label = "Bomb  →  -2 points if tapped")
+        ColorRow(color = BombRed, label = "Bomb → -2 points")
         Spacer(modifier = Modifier.height(40.dp))
 
         Button(
