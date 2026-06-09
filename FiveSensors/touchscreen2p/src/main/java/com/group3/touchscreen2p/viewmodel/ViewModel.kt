@@ -101,8 +101,7 @@ class GameViewModel : ViewModel() {
     }
 
     private fun buildTarget(player: Int, now: Long): Target {
-        val x =
-            Random.nextFloat() * (Constants.SPAWN_X_MAX - Constants.SPAWN_X_MIN) + Constants.SPAWN_X_MIN
+        val x = Random.nextFloat() * (Constants.SPAWN_X_MAX - Constants.SPAWN_X_MIN) + Constants.SPAWN_X_MIN
         val yMin = if (player == 1) Constants.SPAWN_Y_P1_MIN else Constants.SPAWN_Y_P2_MIN
         val yMax = if (player == 1) Constants.SPAWN_Y_P1_MAX else Constants.SPAWN_Y_P2_MAX
         val y = Random.nextFloat() * (yMax - yMin) + yMin
