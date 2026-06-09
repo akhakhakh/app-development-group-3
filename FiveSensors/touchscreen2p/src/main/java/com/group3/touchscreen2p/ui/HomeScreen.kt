@@ -138,7 +138,7 @@ fun HomeScreen(
             // --- HOW TO PLAY button ---
             OutlinedButton(
                 onClick  = onHowToPlayClick,
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = White)
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = White),
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 border   = BorderStroke(3.dp, BlueBorder),
             ) {
@@ -151,7 +151,7 @@ fun HomeScreen(
             // --- SETTINGS button ---
             OutlinedButton(
                 onClick  = { /* Sprint 2 */ },
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = White)
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = White),
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 border   = BorderStroke(3.dp, BlueBorder),
             ) {

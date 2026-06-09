@@ -93,7 +93,9 @@ fun GameScreen(
                                     ?.takeIf { t ->
                                         val dx = tapX - t.normalizedX * size.width
                                         val dy = tapY - t.normalizedY * size.height
-                                        dx * dx + dy * dy <= targetRadiusPx * targetRadiusPx
+                                        val r = targetRadiusPx * (Constants.TARGET_SHRINK_FACTOR
+                                                + (1f - Constants.TARGET_SHRINK_FACTOR) * t.progress)
+                                        dx * dx + dy * dy <= r * r
                                     }
 
                                 if (hitTarget != null) {
@@ -117,6 +119,8 @@ fun GameScreen(
             )
 
             state.targets.forEach { target ->
+                val r = targetRadiusPx * (Constants.TARGET_SHRINK_FACTOR + (1f -
+                        Constants.TARGET_SHRINK_FACTOR) * target.progress)
                 val cx = target.normalizedX * size.width
                 val cy = target.normalizedY * size.height
                 val color = when (target.type) {
@@ -128,7 +132,7 @@ fun GameScreen(
                 // Outer ring
                 drawCircle(
                     color = color.copy(alpha = 0.25f),
-                    radius = targetRadiusPx,
+                    radius = r,
                     center = Offset(cx, cy),
                     style = Stroke(width = 2.dp.toPx())
                 )
@@ -136,7 +140,7 @@ fun GameScreen(
                 // Middle ring
                 drawCircle(
                     color = color.copy(alpha = 0.55f),
-                    radius = targetRadiusPx * 0.65f,
+                    radius = r * 0.65f,
                     center = Offset(cx, cy),
                     style = Stroke(width = 2.dp.toPx())
                 )
@@ -144,7 +148,7 @@ fun GameScreen(
                 // Bullseye
                 drawCircle(
                     color = color,
-                    radius = targetRadiusPx * 0.35f,
+                    radius = r * 0.35f,
                     center = Offset(cx, cy)
                 )
 
@@ -158,7 +162,7 @@ fun GameScreen(
                     drawContext.canvas.nativeCanvas.drawText(
                         label,
                         cx,
-                        cy + targetRadiusPx * 0.35f * 0.4f, // vertically center in the bullseye
+                        cy + r * 0.35f * 0.4f, // vertically center in the bullseye
                         Paint().apply {
                             this.color = if (label == "!") Color.WHITE else Color.BLACK
                             textSize = targetRadiusPx * 0.45f
