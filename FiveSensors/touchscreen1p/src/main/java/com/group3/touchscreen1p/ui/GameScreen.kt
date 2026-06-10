@@ -8,11 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.group3.touchscreen1p.ui.theme.BackgroundDark
 import com.group3.touchscreen1p.ui.theme.NeonReactorTheme
 
 @Composable
-fun GameScreen() {
+fun GameScreen(navController: NavHostController) {
 
     Box(
         modifier = Modifier
@@ -28,6 +30,8 @@ fun GameScreen() {
 @Composable
 private fun GameScreenPreview() {
     NeonReactorTheme {
-        GameScreen()
+        GameScreen(
+            navController = rememberNavController()
+        )
     }
 }

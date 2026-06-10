@@ -18,13 +18,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import com.group3.touchscreen1p.navigation.Routes
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.group3.touchscreen1p.R
 import com.group3.touchscreen1p.ui.theme.*
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavHostController) {
 
     val context = LocalContext.current
 
@@ -89,8 +92,8 @@ fun HomeScreen() {
                     .fillMaxWidth()
                     .height(80.dp)
                     .clickable {
-                        context.startActivity(
-                            Intent(context, GameActivity::class.java)
+                        navController.navigate(
+                            Routes.Game.route
                         )
                     }
             )
@@ -105,18 +108,33 @@ fun HomeScreen() {
                     icon = R.drawable.info_icon,
                     title = "How To Play",
                     modifier = Modifier.weight(1f)
+                        .clickable {
+                            navController.navigate(
+                                Routes.HowToPlay.route
+                            )
+                        }
                 )
 
                 MenuCard(
                     icon = R.drawable.settings_icon,
                     title = "Settings",
                     modifier = Modifier.weight(1f)
+                        .clickable {
+                            navController.navigate(
+                                Routes.Settings.route
+                            )
+                        }
                 )
 
                 MenuCard(
                     icon = R.drawable.cup_icon,
                     title = "High Score",
                     modifier = Modifier.weight(1f)
+                        .clickable {
+                            navController.navigate(
+                                Routes.HighScore.route
+                            )
+                        }
                 )
             }
         }
@@ -167,6 +185,8 @@ fun MenuCard(
 @Composable
 fun HomeScreenPreview() {
     NeonReactorTheme {
-        HomeScreen()
+        HomeScreen(
+            navController = rememberNavController()
+        )
     }
 }
