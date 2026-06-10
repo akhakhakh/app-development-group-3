@@ -1,13 +1,19 @@
 package com.group3.touchscreen1p.ui
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import com.group3.touchscreen1p.R
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import com.group3.touchscreen1p.ui.theme.NeonReactorTheme
 
-class GameActivity : AppCompatActivity() {
+class GameActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_game)
+
+        setContent {
+            NeonReactorTheme {
+                GameScreen()
+            }
+        }
     }
 }
