@@ -1,39 +1,47 @@
 package com.group3.microphone.detector
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.flow
 
-const val DEFAULT_JUMP_THRESHOLD = 0.0002f
-private const val JUMP_COOLDOWN_MS = 300L
-
-private data class DetectorState(
-    val wasAbove: Boolean = false,
-    val lastJumpAt: Long = 0L,
-    val shouldJump: Boolean = false,
-    val jumpAmplitude: Float = 0f
-)
+const val DEFAULT_JUMP_THRESHOLD = 0.004f
+private const val JUMP_COOLDOWN_MS = 600L
+// collect peak amplitude for this long after threshold crossing before emitting jump
+private const val PEAK_WINDOW_MS = 120L
 
 class JumpDetector(
-    val threshold: Float = DEFAULT_JUMP_THRESHOLD,
-    private val cooldownMs: Long = JUMP_COOLDOWN_MS
+    var threshold: Float = DEFAULT_JUMP_THRESHOLD,
+    private val cooldownMs: Long = JUMP_COOLDOWN_MS,
+    private val peakWindowMs: Long = PEAK_WINDOW_MS
 ) {
-    // emits the amplitude that triggered the jump (use it to scale jump height)
-    fun detectJumps(amplitudeFlow: Flow<Float>): Flow<Float> =
-        amplitudeFlow
-            .runningFold(DetectorState()) { state, amplitude ->
-                val isAbove = amplitude >= threshold
-                val now = System.currentTimeMillis()
-                val cooldownPassed = (now - state.lastJumpAt) >= cooldownMs
-                val shouldJump = isAbove && !state.wasAbove && cooldownPassed
-                DetectorState(
-                    wasAbove = isAbove,
-                    lastJumpAt = if (shouldJump) now else state.lastJumpAt,
-                    shouldJump = shouldJump,
-                    jumpAmplitude = if (shouldJump) amplitude else state.jumpAmplitude
-                )
+    fun detectJumps(amplitudeFlow: Flow<Float>): Flow<Float> = flow {
+        var lastJumpAt = 0L
+        var trackingPeak = false
+        var peakAmplitude = 0f
+        var peakWindowEnd = 0L
+
+        amplitudeFlow.collect { amplitude ->
+            val now = System.currentTimeMillis()
+
+            if (trackingPeak)
+            {
+                if (now < peakWindowEnd)
+                {
+                    if (amplitude > peakAmplitude) peakAmplitude = amplitude
+                } else {
+                    // window closed — emit the tracked peak as the jump strength
+                    emit(peakAmplitude)
+                    lastJumpAt = now
+                    trackingPeak = false
+                    peakAmplitude = 0f
+                }
+
+            } else if (amplitude >= threshold && (now - lastJumpAt) >= cooldownMs)
+            {
+                // rising edge start peak tracking window
+                trackingPeak = true
+                peakAmplitude = amplitude
+                peakWindowEnd = now + peakWindowMs
             }
-            .filter { it.shouldJump }
-            .map { it.jumpAmplitude }
+        }
+    }
 }
