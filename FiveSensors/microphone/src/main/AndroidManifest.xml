@@ -3,10 +3,19 @@
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-    <application>
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="VoiceJump"
+        android:theme="@style/Theme.FiveSensors">
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
