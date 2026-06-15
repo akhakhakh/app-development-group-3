@@ -155,8 +155,8 @@ fun GameScreen(
                 // Label for special targets
                 val label = when (target.type) {
                     TargetType.TRICK -> "!"
-                    TargetType.BOMB  -> "X"
-                    else             -> null
+                    TargetType.BOMB -> "X"
+                    else -> null
                 }
                 if (label != null) {
                     drawContext.canvas.nativeCanvas.drawText(

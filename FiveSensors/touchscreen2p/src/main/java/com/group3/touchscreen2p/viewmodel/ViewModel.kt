@@ -90,14 +90,15 @@ class GameViewModel : ViewModel() {
         _state.update { s ->
             var list = s.targets
             val specialsEnabled = maxOf(s.score1, s.score2) >= Constants.SPECIALS_UNLOCK_SCORE
+            val leadingScore = maxOf(s.score1, s.score2)
 
             if (list.count { it.player == 1 } < Constants.MAX_TARGETS_PER_PLAYER) {
                 list = list + buildTarget(player = 1, now = now, specialsEnabled =
-                    specialsEnabled, existing = list)
+                    specialsEnabled, existing = list, leadingScore = leadingScore)
             }
             if (list.count { it.player == 2 } < Constants.MAX_TARGETS_PER_PLAYER) {
                 list = list + buildTarget(player = 2, now = now, specialsEnabled =
-                    specialsEnabled, existing = list)
+                    specialsEnabled, existing = list, leadingScore = leadingScore)
             }
 
             s.copy(targets = list)
@@ -105,12 +106,23 @@ class GameViewModel : ViewModel() {
     }
 
     private fun buildTarget(player: Int, now: Long, specialsEnabled: Boolean,
-                            existing: List<Target>): Target {
-           val yMin = if (player == 1) Constants.SPAWN_Y_P1_MIN else Constants.SPAWN_Y_P2_MIN
+                            existing: List<Target>, leadingScore: Int): Target {
+        val yMin = if (player == 1) Constants.SPAWN_Y_P1_MIN else Constants.SPAWN_Y_P2_MIN
         val yMax = if (player == 1) Constants.SPAWN_Y_P1_MAX else Constants.SPAWN_Y_P2_MAX
         var x: Float
         var y: Float
         var attempts = 0
+        val lifetime = if (leadingScore <
+            Constants.LIFETIME_REDUCTION_START_SCORE) {
+            Constants.TARGET_LIFETIME_MS
+        } else {
+            val t = (leadingScore - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat() /
+                    (Constants.WIN_SCORE - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat()
+            (Constants.TARGET_LIFETIME_MS - (Constants.TARGET_LIFETIME_MS
+                    - Constants.TARGET_LIFETIME_MIN_MS) * t)
+                .toLong()
+                .coerceAtLeast(Constants.TARGET_LIFETIME_MIN_MS)
+        }
         do {
             x = Random.nextFloat() * (Constants.SPAWN_X_MAX - Constants.SPAWN_X_MIN)+
                     Constants.SPAWN_X_MIN
@@ -131,7 +143,8 @@ class GameViewModel : ViewModel() {
         }
 
         return Target(
-            player = player, normalizedX = x, normalizedY = y, spawnTimeMs = now, type = type
+            player = player, normalizedX = x, normalizedY = y, spawnTimeMs = now, lifetimeMs =
+                lifetime, type = type
         )
     }
 

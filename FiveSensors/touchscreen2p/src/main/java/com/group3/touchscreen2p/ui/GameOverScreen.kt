@@ -49,6 +49,7 @@ fun GameOverScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Header
         Text(
             text = "GAME OVER",
             fontSize = 20.sp,
@@ -81,6 +82,7 @@ fun GameOverScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Each player score
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -97,6 +99,7 @@ fun GameOverScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
+        // Button
         Button(
             onClick = onPlayAgain,
             modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
