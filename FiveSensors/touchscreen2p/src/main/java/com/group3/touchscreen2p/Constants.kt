@@ -16,13 +16,15 @@ object Constants {
     const val COUNTDOWN_SECONDS = 3
     const val GAME_TICK_MS = 16L // ~60 updates per second
     const val TARGET_LIFETIME_MS = 3000L // target disappears after 3s
-    const val SPAWN_INTERVAL_MS = 1500L  // new target every 1.5s
+    const val TARGET_LIFETIME_MIN_MS = 300L // fastest lifetime at max score
+    const val SPAWN_INTERVAL_MS = 900L  // new target every 1.5s
     const val FLOATING_EFFECT_DURATION_MS = 800L // score label fades in 0.8s
 
     /* --- Targets --- */
     const val MAX_TARGETS_PER_PLAYER = 3
-    const val TARGET_MIN_SPACING = 0.22f  // minimum distance between targets
-    const val SPECIALS_UNLOCK_SCORE = 3
+    const val TARGET_MIN_SPACING = 0.22f // minimum distance between targets
+    const val LIFETIME_REDUCTION_START_SCORE = 4 // score at which targets start shrinking faster
+    const val SPECIALS_UNLOCK_SCORE = 2
 
     /* --- Spawn positions (0.0 to 1.0 of the full screen) --- */
     const val SPAWN_X_MIN = 0.12f // padding to avoid edge
