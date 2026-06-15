@@ -7,24 +7,25 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 
 class SensorHandler(context: Context) : SensorEventListener {
-
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
+    // fallback -> if there's no gravity sensor, use raw accelerometer
+    private val fallbackSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
-    // this sensor fuses gyroscope and accelerometer for stable tilt readings
-    private val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-
-    // current tilt values -> other classes read these
-    var tiltX: Float = 0f   // Left/right tilt → controls marble X movement
+    var tiltX: Float = 0f
         private set
-    var tiltY: Float = 0f   // Forward/backward tilt → controls marble Y movement
+    var tiltY: Float = 0f
         private set
 
+    private var baselineX: Float = 0f
+    private var baselineY: Float = 0f
+    private var isCalibrated = false
     val isAvailable: Boolean
-        get() = rotationSensor != null
+        get() = this.gravitySensor != null || this.fallbackSensor != null
 
     fun start() {
-        rotationSensor?.let {
-            // SENSOR_DELAY_GAME -> ~50 readings per second, tuned for games
+        val sensor = gravitySensor ?: fallbackSensor
+        sensor?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
         }
     }
@@ -33,24 +34,30 @@ class SensorHandler(context: Context) : SensorEventListener {
         sensorManager.unregisterListener(this)
     }
 
-    // called by Android every time a new sensor reading is available
+    fun recalibrate() {
+        isCalibrated = false
+    }
+
     override fun onSensorChanged(event: SensorEvent) {
-        if (event.sensor.type != Sensor.TYPE_ROTATION_VECTOR) return
+        if (event.sensor.type != Sensor.TYPE_GRAVITY &&
+            event.sensor.type != Sensor.TYPE_ACCELEROMETER) return
 
-        // convert the rotation vector into a rotation matrix
-        // a rotation matrix describes the phone's full 3D orientation
-        val rotationMatrix = FloatArray(9)
-        SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+        val gravityMS2 = 9.81f
+        val rawX = event.values[0] / gravityMS2
+        val rawY = event.values[1] / gravityMS2
 
-        // extract tilt angles from the rotation matrix
-        // rotationMatrix[1] -> how much the phone tilts left/right (X axis)
-        // rotationMatrix[7] -> how much the phone tilts forward/backward (Y axis)
-        // these values are between -1.0 and 1.0
-        tiltX = rotationMatrix[1]   // Positive -> tilt right
-        tiltY = rotationMatrix[7]   // Positive -> tilt forward (away from you)
+        if (!isCalibrated) {
+            baselineX = rawX
+            baselineY = rawY
+            isCalibrated = true
+        }
+
+        val relativeX = rawX - baselineX
+        val relativeY = rawY - baselineY
+
+        tiltX = (-relativeX).coerceIn(-1f, 1f)
+        tiltY = (relativeY).coerceIn(-1f, 1f)
     }
 
-    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
-        // Not needed for this game
-    }
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
 }

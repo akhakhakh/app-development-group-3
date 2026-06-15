@@ -4,14 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import com.group3.gyromaze.ui.theme.FiveSensorsTheme
 
 class MainActivity : ComponentActivity() {
 
-    // viewModels() creates the ViewModel and keeps it alive across config changes
     private val viewModel: GameViewModel by viewModels()
-
-    // SensorHandler is created once and lives for the Activity's lifetime
     private lateinit var sensorHandler: SensorHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,21 +18,94 @@ class MainActivity : ComponentActivity() {
         sensorHandler = SensorHandler(this)
 
         setContent {
-            MaterialTheme {
-                GameScreen(viewModel = viewModel, sensorHandler = sensorHandler)
+            FiveSensorsTheme {
+                var currentScreen by remember { mutableStateOf(Screen.MAIN_MENU) }
+                var resultScore by remember { mutableIntStateOf(0) }
+                var isWin by remember { mutableStateOf(false) }
+
+                when (currentScreen) {
+                    Screen.MAIN_MENU -> MainMenuScreen(
+                        onPlay = {
+                            sensorHandler.recalibrate()
+                            viewModel.restartLvl()
+                            currentScreen = Screen.GAME
+                        },
+                        onHowToPlay = {
+                            currentScreen = Screen.INSTRUCTIONS
+                        },
+                        onReturn = {
+                            finish()
+                        }
+                    )
+
+                    Screen.INSTRUCTIONS -> HowToPlayScreen(
+                        onPlay = {
+                            sensorHandler.recalibrate()
+                            viewModel.restartLvl()
+                            currentScreen = Screen.GAME
+                        },
+                        onReturn = {
+                            currentScreen = Screen.MAIN_MENU
+                        }
+                    )
+
+                    Screen.GAME -> GameScreen(
+                        viewModel = viewModel,
+                        sensorHandler = sensorHandler,
+                        onLevelComplete = { score ->
+                            resultScore = score
+                            isWin = true
+                            currentScreen = Screen.LVL_COMPLETE
+                        },
+                        onLevelFailed = { score ->
+                            resultScore = score
+                            isWin = false
+                            currentScreen = Screen.LVL_FAILED
+                        },
+                        onReturn = {
+                            currentScreen = Screen.MAIN_MENU
+                        }
+                    )
+
+                    Screen.LVL_COMPLETE -> ResultScreen(
+                        isWin = true,
+                        score = resultScore,
+                        onPrimary = {
+                            sensorHandler.recalibrate()
+                            viewModel.nextLvl()
+                            currentScreen = Screen.GAME
+                        },
+                        onSecondary = {
+                            sensorHandler.recalibrate()
+                            viewModel.restartLvl()
+                            currentScreen = Screen.GAME
+                        }
+                    )
+
+                    Screen.LVL_FAILED -> ResultScreen(
+                        isWin = false,
+                        score = resultScore,
+                        onPrimary = {
+                            sensorHandler.recalibrate()
+                            viewModel.restartLvl()
+                            currentScreen = Screen.GAME
+                        },
+                        onSecondary = {
+                            currentScreen = Screen.MAIN_MENU
+                        }
+                    )
+                }
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Start reading sensor when the game is visible
         sensorHandler.start()
     }
 
     override fun onPause() {
         super.onPause()
-        // Stop reading sensor when the game goes to background — saves battery
         sensorHandler.stop()
     }
 }

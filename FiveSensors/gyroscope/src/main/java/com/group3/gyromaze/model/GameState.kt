@@ -1,8 +1,6 @@
 // Data classes
 package com.group3.gyromaze.model
 
-import androidx.compose.ui.unit.Velocity
-
 // Types of tiles that the marble can interact with
 enum class TileType {
     REG_FLOOR, // Normal floor -> normal friction
@@ -14,17 +12,17 @@ enum class TileType {
     DOOR_CLOSED, // Door closed -> acts like a wall
 }
 
-// A 2D position in the game world (in grid cells, not pixels)
-data class Vec2(val x : Float, val y: Float) {
+// 2D position in grid units (fractional allowed for smooth movement)
+data class Vec2(val x: Float, val y: Float) {
     operator fun plus(other: Vec2) = Vec2(x + other.x, y + other.y)
     operator fun times(scalar: Float) = Vec2(x * scalar, y * scalar)
 }
 
-// Full state of the game at any moment
+// the complete game state at any moment in time
 data class GameState(
-    val marblePos : Vec2, // Marble centre position (grid units)
-    val marbleVelocity : Vec2, // Current speed and direction
-    val isLevelComplete : Boolean = false,
-    val isGameOver : Boolean = false,
-    val elapsedSeconds : Float = 0f
+    val marblePos: Vec2,
+    val marbleVelocity: Vec2,
+    val isLvlComplete: Boolean = false,
+    val isGameOver: Boolean = false,
+    val elapsedSeconds: Float = 0f
 )

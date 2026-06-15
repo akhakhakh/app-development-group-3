@@ -1,26 +1,27 @@
-// Defines maze layouts as data (walls tiles and goals)
 package com.group3.gyromaze
 
 import com.group3.gyromaze.model.TileType
 import com.group3.gyromaze.model.Vec2
 
 data class MazeLevel(
-    val grid : List<List<TileType>>, // [row][col] -> outer list represents the rows
-    val marbleStart : Vec2, // Starting position in grid units
-    val teleporterPairs : Map<Vec2, Vec2> = emptyMap(), // entry -> exit
-    val timedDoorPositions : List<Vec2> = emptyList(), // doors that toggle
-    val doorIntervalSeconds : Float = 2f
+    val grid: List<List<TileType>>,
+    val marbleStart: Vec2,
+    val teleporterPairs: Map<Vec2, Vec2> = emptyMap(),
+    val timedDoorPositions: List<Vec2> = emptyList(),
+    val doorIntervalSeconds: Float = 3f
 ) {
     val cols: Int get() = grid[0].size
     val rows: Int get() = grid.size
 }
 
 object MazeData {
-    // W = Wall, F = Floor, G = Goal, I = Ice, T = Teleporter, D = Door
-    private fun maze(vararg rows: String) : List<List<TileType>> {
+
+    // Build a grid from readable strings
+    // W=Wall  .=Floor  G=Goal(hole)  I=Ice  T=Teleporter  D=Door
+    private fun maze(vararg rows: String): List<List<TileType>> {
         return rows.map { row ->
-            row.map { char ->
-                when (char) {
+            row.map { ch ->
+                when (ch) {
                     'W' -> TileType.WALL
                     'G' -> TileType.GOAL
                     'I' -> TileType.ICED_FLOOR
@@ -32,55 +33,62 @@ object MazeData {
         }
     }
 
-    /*
-    Writing levels as strings,
-    which are readable like a map. If I want to make any changes I can just edit the string,
-    so no geometry math is needed
-     */
     val levels = listOf(
-        // Level 1 -> simple intro maze
+
+        // Level 1 — tutorial, learn the basic controls
         MazeLevel(
             grid = maze(
-                "WWWWWWWGWW",
+                "WWWWWWWWWW",
                 "W........W",
                 "W.WWWWW..W",
                 "W........W",
                 "W..WWWWW.W",
                 "W........W",
-                "WWWWWWWWWW"
+                "WWWW...WWW",
+                "WWWW.W.WWW",
+                "WWWW...WWW",
+                "WWWWWGWWWW"
             ),
             marbleStart = Vec2(1.5f, 1.5f)
         ),
 
-        // Level 2 -> iced tiles introduced
+        // Level 2 — ice tiles introduced
         MazeLevel(
             grid = maze(
-                "WWWWWGWWWW",
+                "WWWWWWWWWW",
                 "W.III....W",
-                "W.WWWWW..W",
+                "W.W.WWWW.W",
                 "W.I......W",
                 "W.WWWW.WWW",
-                "W........W",
-                "WWWWWWWWWW"
+                "W......I.W",
+                "WWWWW.WW.W",
+                "W....I...W",
+                "W.WWWWWW.W",
+                "WWWWWWWGWW"
             ),
             marbleStart = Vec2(1.5f, 1.5f)
         ),
 
-        // Level 3 -> teleporters
+        // Level 3 — teleporter + timed door
         MazeLevel(
             grid = maze(
-                "WWWWWWWGWW",
+                "WWWWWWWWWW",
                 "W........W",
                 "WWWWWWT.WW",
                 "W........W",
-                "W.WWWWWWWW",
+                "W.WWWWDWWW",
                 "WT.......W",
-                "WWWWWWWWWW"
+                "W.WWWWWW.W",
+                "W........W",
+                "WWWWW.WWWW",
+                "WWWWWGWWWW"
             ),
             marbleStart = Vec2(1.5f, 1.5f),
             teleporterPairs = mapOf(
                 Vec2(6f, 2f) to Vec2(1f, 5f)
-            )
+            ),
+            timedDoorPositions = listOf(Vec2(6f, 4f)),
+            doorIntervalSeconds = 2.5f
         )
     )
 }
