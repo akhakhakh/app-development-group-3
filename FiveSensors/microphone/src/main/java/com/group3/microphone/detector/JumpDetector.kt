@@ -3,9 +3,8 @@ package com.group3.microphone.detector
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-const val DEFAULT_JUMP_THRESHOLD = 0.004f
+const val DEFAULT_JUMP_THRESHOLD = 0.090f
 private const val JUMP_COOLDOWN_MS = 600L
-// collect peak amplitude for this long after threshold crossing before emitting jump
 private const val PEAK_WINDOW_MS = 120L
 
 class JumpDetector(
@@ -28,7 +27,6 @@ class JumpDetector(
                 {
                     if (amplitude > peakAmplitude) peakAmplitude = amplitude
                 } else {
-                    // window closed — emit the tracked peak as the jump strength
                     emit(peakAmplitude)
                     lastJumpAt = now
                     trackingPeak = false
@@ -37,7 +35,6 @@ class JumpDetector(
 
             } else if (amplitude >= threshold && (now - lastJumpAt) >= cooldownMs)
             {
-                // rising edge start peak tracking window
                 trackingPeak = true
                 peakAmplitude = amplitude
                 peakWindowEnd = now + peakWindowMs
