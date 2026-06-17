@@ -5,10 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.group3.touchscreen2p.MainActivity as TapBattleActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,9 +31,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        binding.btnCameraDemo.setOnClickListener {
-            startActivity(Intent(this, com.group3.camera.MainActivity::class.java))
-        }
     }
 }
 

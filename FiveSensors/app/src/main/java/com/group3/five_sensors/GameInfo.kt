@@ -37,7 +37,7 @@ val allGames = listOf(
         description = "Tilt and navigate",
         howToPlay = "Tilt your phone in any direction to steer and control the game. Balance is everything!",
         color = Color(0xFF43A047),
-        activityClass = com.group3.myapplication.MainActivity::class.java
+        activityClass = com.group3.gyromaze.MainActivity::class.java
     ),
     GameInfo(
         name = "Camera",

@@ -114,9 +114,7 @@ fun GameScreen(
 
                 Button(
                     onClick = {
-                        viewModel.hitLane(
-                            OrbColor.entries.indexOf(color)
-                        )
+                        viewModel.hitColor(color)
                     },
                     modifier = Modifier.height(60.dp)
                 ) {
