@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -28,10 +29,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.group3.microphone.permission.rememberMicPermissionState
 import com.group3.microphone.ui.theme.FiveSensorsTheme
 
 private val BgBlue = Color(0xFF4890D1)
@@ -44,6 +47,13 @@ fun HomeScreen(
     onHowToPlay: () -> Unit = {},
     onSettings: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val micPermissionState = rememberMicPermissionState(context)
+
+    LaunchedEffect(Unit) {
+        if (!micPermissionState.isGranted) micPermissionState.requestPermission()
+    }
+
     DisposableEffect(Unit) {
         SoundManager.startHomeMelody()
         onDispose { SoundManager.stopHomeMelody() }
