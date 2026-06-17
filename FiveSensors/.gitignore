@@ -1,4 +1,6 @@
 *.iml
+
+# Gradle
 .gradle
 /local.properties
 /.idea/caches
@@ -14,6 +16,11 @@
 .DS_Store
 /build
 **/build/
+
+# Local
+/local.properties
+/.idea/
+.DS_Store
 /captures
 .externalNativeBuild
 .cxx
