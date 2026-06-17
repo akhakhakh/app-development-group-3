@@ -5,19 +5,32 @@ import android.graphics.Paint
 import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -27,11 +40,14 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.group3.touchscreen2p.Constants
+import com.group3.touchscreen2p.data.SettingsRepository
 import com.group3.touchscreen2p.model.Phase
 import com.group3.touchscreen2p.model.TargetType
 import com.group3.touchscreen2p.ui.theme.BlueDivider
@@ -39,17 +55,25 @@ import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.BombRed
 import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
+import com.group3.touchscreen2p.ui.theme.NavyCard
 import com.group3.touchscreen2p.ui.theme.NavySurface
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
 import com.group3.touchscreen2p.ui.theme.Yellow
 import com.group3.touchscreen2p.viewmodel.GameViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onGameOver: (winner: Int, score1: Int, score2: Int, bestCombo: Int) -> Unit
+    onGameOver: (winner: Int, score1: Int, score2: Int, bestCombo: Int) -> Unit,
+    onHome: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+
+    val context = LocalContext.current
+    val settingsRepository = remember { SettingsRepository(context) }
+    val volume by settingsRepository.sfxVolume.collectAsState(initial = 0.8f)
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.startGame()
@@ -247,6 +271,62 @@ fun GameScreen(
                 )
             }
         }
+
+        if (state.phase == Phase.PLAYING || state.phase == Phase.PAUSED) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(NavySurface.copy(alpha = 0.9f))
+                    .border(2.dp, Yellow, CircleShape)
+                    .clickable { viewModel.pauseGame() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "❙❙", color = Yellow, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (state.phase == Phase.PAUSED) {
+            Dialog(onDismissRequest = { viewModel.resumeGame() }) {
+                Column(
+                    modifier = Modifier
+                        .background(NavyCard, RoundedCornerShape(16.dp))
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("PAUSED")
+
+                    Slider(
+                        value = volume,
+                        onValueChange = { newVolume ->
+                            scope.launch { settingsRepository.setSfxVolume(newVolume) }
+                        }
+                    )
+
+                    Button(
+                        onClick = { viewModel.resumeGame() },
+                        modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                    ) { Text("RESUME") }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.startGame() },
+                        modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                    ) { Text("REPLAY") }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onHome,
+                        modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                        ) { Text("HOME") }
+                }
+            }
+        }
+
     }
 }
 

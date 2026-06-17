@@ -27,6 +27,31 @@ class GameViewModel : ViewModel() {
     private var gameLoopJob: Job? = null
     private var spawnJob: Job? = null
 
+    private var pauseStartMs: Long = 0
+
+    fun pauseGame() {
+        if (_state.value.phase != Phase.PLAYING) return
+        pauseStartMs = SystemClock.elapsedRealtime()
+        gameLoopJob?.cancel()
+        spawnJob?.cancel()
+        _state.update { it.copy(phase = Phase.PAUSED) }
+    }
+
+    fun resumeGame() {
+        if (_state.value.phase != Phase.PAUSED) return
+        val pausedDurationMs = SystemClock.elapsedRealtime() - pauseStartMs
+        _state.update { s ->
+            s.copy(
+                phase = Phase.PLAYING,
+                targets = s.targets.map { it.copy(spawnTimeMs = it.spawnTimeMs + pausedDurationMs) },
+                floatingEffects = s.floatingEffects.map { it.copy(startTimeMs =
+                    it.startTimeMs + pausedDurationMs) }
+            )
+        }
+        launchGameLoop()
+        launchSpawner()
+    }
+
     private fun cancelAll() {
         countdownJob?.cancel()
         gameLoopJob?.cancel()

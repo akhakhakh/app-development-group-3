@@ -40,7 +40,8 @@ fun TapBattleNavGraph(navController: NavHostController) {
                     navController.navigate(Routes.gameOver(winner, score1, score2, bestCombo)) {
                         popUpTo(Routes.GAME) { inclusive = true }
                     }
-                }
+                },
+                onHome = { navController.popBackStack(Routes.HOME, inclusive = false) }
             )
         }
 
