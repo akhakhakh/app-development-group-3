@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -99,8 +100,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         listeningJob = viewModelScope.launch {
             val sharedAmplitude = recorder.amplitudeFlow()
                 .shareIn(this, SharingStarted.Eagerly, replay = 0)
+            // Volume bar always shows real amplitude; detector only sees it when mic isn't muted
             launch { sharedAmplitude.collect { _amplitude.value = it } }
-            detector.detectJumps(sharedAmplitude).collect { amplitude ->
+            detector.detectJumps(sharedAmplitude.filter { !SoundManager.isMicMuted }).collect { amplitude ->
                 resetJob?.cancel()
                 _jumpAmplitude.value = amplitude
                 val force = JUMP_VELOCITY_BASE +
@@ -158,10 +160,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Maps the Settings sensitivity slider (0..1) to a jump threshold.
-     * 0.0 → 0.015 (needs a louder voice), 0.5 → 0.004 (default), 1.0 → 0.001 (any whisper).
+     * 0.0 → 0.016 (needs a clear voice), 0.5 → 0.010 (default), 1.0 → 0.004 (soft voice).
      */
     fun setSensitivity(sensitivity: Float) {
-        detector.threshold = (0.007f - 0.006f * sensitivity).coerceIn(0.001f, 0.020f)
+        detector.threshold = (0.016f - 0.012f * sensitivity).coerceIn(0.004f, 0.016f)
     }
 
     private fun checkAndSaveBestScore(score: Int) {

@@ -10,6 +10,16 @@ object SoundManager {
 
     @Volatile private var enabled = true
 
+    // ── Mic mute gate ─────────────────────────────────────────────────────────
+    // Set whenever a sound effect fires so the jump detector ignores echo bleed.
+    @Volatile private var muteUntilMs: Long = 0L
+    val isMicMuted: Boolean get() = System.currentTimeMillis() < muteUntilMs
+
+    private fun muteMic(durationMs: Int, trailMs: Int = 300) {
+        val end = System.currentTimeMillis() + durationMs + trailMs
+        if (end > muteUntilMs) muteUntilMs = end
+    }
+
     // ── Enable / disable all audio ────────────────────────────────────────────
     fun setEnabled(enabled: Boolean) {
         this.enabled = enabled
@@ -17,9 +27,9 @@ object SoundManager {
     }
 
     // ── Short sound effects (fire-and-forget) ─────────────────────────────────
-    fun playJump()     = playAsync(startHz = 320f, endHz = 700f, durationMs = 120)
-    fun playLand()     = playAsync(startHz = 200f, endHz = 80f,  durationMs = 90)
-    fun playGameOver() = playAsync(startHz = 450f, endHz = 120f, durationMs = 500)
+    fun playJump()     { muteMic(120); playAsync(startHz = 320f, endHz = 700f, durationMs = 120) }
+    fun playLand()     { muteMic(90);  playAsync(startHz = 200f, endHz = 80f,  durationMs = 90) }
+    fun playGameOver() { muteMic(500); playAsync(startHz = 450f, endHz = 120f, durationMs = 500) }
 
     // ── Home-screen melody (looping) ──────────────────────────────────────────
     // Each pair: frequency in Hz (0 = rest), duration in ms.

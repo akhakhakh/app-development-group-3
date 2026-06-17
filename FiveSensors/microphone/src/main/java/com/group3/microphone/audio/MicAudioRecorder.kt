@@ -4,6 +4,7 @@ import android.Manifest
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
 import androidx.annotation.RequiresPermission
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -33,6 +34,10 @@ class MicAudioRecorder {
             AudioFormat.ENCODING_PCM_16BIT,
             bufferBytes
         )
+        // AEC removes speaker output from the mic signal to prevent sound effects from triggering jumps
+        val aec = if (AcousticEchoCanceler.isAvailable()) {
+            AcousticEchoCanceler.create(recorder.audioSessionId)?.also { it.enabled = true }
+        } else null
         val buffer = ShortArray(READ_BUFFER_SHORTS)
         recorder.startRecording()
         try {
@@ -47,6 +52,7 @@ class MicAudioRecorder {
         } finally {
             recorder.stop()
             recorder.release()
+            aec?.release()
         }
     }.flowOn(Dispatchers.IO)
 }

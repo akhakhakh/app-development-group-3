@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.group3.microphone.detector.DEFAULT_JUMP_THRESHOLD
 import com.group3.microphone.permission.MicPermissionState
 import com.group3.microphone.permission.rememberMicPermissionState
 import com.group3.microphone.viewmodel.GameViewModel
@@ -315,6 +316,7 @@ fun GameScreenContent(
             // ── HUD panel ────────────────────────────────────────────────────
             HudPanel(
                 volume = (amplitude / JUMP_MAX_AMPLITUDE).coerceIn(0f, 1f),
+                thresholdFraction = DEFAULT_JUMP_THRESHOLD / JUMP_MAX_AMPLITUDE,
                 bottomPadding = innerPadding.calculateBottomPadding()
             )
         }
@@ -443,7 +445,7 @@ fun GameScreenContent(
 }
 
 @Composable
-private fun HudPanel(volume: Float, bottomPadding: Dp = 0.dp) {
+private fun HudPanel(volume: Float, thresholdFraction: Float = 0f, bottomPadding: Dp = 0.dp) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -461,7 +463,7 @@ private fun HudPanel(volume: Float, bottomPadding: Dp = 0.dp) {
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(6.dp))
-            VolumeBar(progress = volume)
+            VolumeBar(progress = volume, thresholdFraction = thresholdFraction)
         }
     }
 }
@@ -498,7 +500,7 @@ private fun MicIcon() {
 }
 
 @Composable
-private fun VolumeBar(progress: Float, modifier: Modifier = Modifier) {
+private fun VolumeBar(progress: Float, thresholdFraction: Float = 0f, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -511,5 +513,15 @@ private fun VolumeBar(progress: Float, modifier: Modifier = Modifier) {
                 .fillMaxHeight()
                 .background(Yellow, RoundedCornerShape(5.dp))
         )
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val x = thresholdFraction.coerceIn(0f, 1f) * size.width
+            drawLine(
+                color = Color.White,
+                start = Offset(x, 0f),
+                end = Offset(x, size.height),
+                strokeWidth = 2.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
     }
 }
