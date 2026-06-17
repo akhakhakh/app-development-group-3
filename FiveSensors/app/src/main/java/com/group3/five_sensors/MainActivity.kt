@@ -34,6 +34,10 @@ class MainActivity : ComponentActivity() {
                 })
             }
         }
+
+        binding.btnCameraDemo.setOnClickListener {
+            startActivity(Intent(this, com.group3.camera.MainActivity::class.java))
+        }
     }
 }
 
