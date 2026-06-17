@@ -60,7 +60,7 @@ class GameViewModel : ViewModel() {
 
             while (true) {
 
-                delay(16)
+                delay(16L)
 
                 if (_gameState.value.isPaused ||
                     _gameState.value.isGameOver
@@ -100,33 +100,41 @@ class GameViewModel : ViewModel() {
         )
     }
 
-    fun hitLane(lane: Int) {
+    fun hitColor(color: OrbColor) {
 
         val orb = _gameState.value.orbs.firstOrNull {
 
-            it.lane == lane &&
+            it.color == color &&
                     it.positionY in 1100f..1400f
         }
 
         if (orb != null) {
 
-            val combo = (_gameState.value.combo + 1)
-                .coerceAtMost(10)
+            val combo =
+                (_gameState.value.combo + 1)
+                    .coerceAtMost(10)
 
-            _gameState.value = _gameState.value.copy(
-                score = _gameState.value.score +
-                        (10 * _gameState.value.combo),
-                combo = combo,
-                orbs = _gameState.value.orbs.filter {
-                    it.id != orb.id
-                }
-            )
+            _gameState.value =
+                _gameState.value.copy(
+
+                    score =
+                        _gameState.value.score +
+                                (10 * _gameState.value.combo),
+
+                    combo = combo,
+
+                    orbs =
+                        _gameState.value.orbs.filter {
+                            it.id != orb.id
+                        }
+                )
 
         } else {
 
-            _gameState.value = _gameState.value.copy(
-                combo = 1
-            )
+            _gameState.value =
+                _gameState.value.copy(
+                    combo = 1
+                )
         }
     }
 
