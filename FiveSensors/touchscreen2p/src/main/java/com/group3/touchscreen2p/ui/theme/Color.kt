@@ -2,10 +2,27 @@ package com.group3.touchscreen2p.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+/* --- Button --- */
+val BlueBorder = Color(0xFF334070)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+/* --- Background --- */
+val NavyBackground = Color(0xFF0A0E21)
+val NavySurface    = Color(0xFF111827)
+val NavyCard       = Color(0xFF1A2A4A)
+val GreyText       = Color(0xFF556080)
+val BlueDivider    = Color(0xFF1E2A4A)
+
+
+/* --- Brand --- */
+val Yellow   = Color(0xFFFFD60A)
+val White   = Color(0xFFFFFFFF)
+
+/* --- Player --- */
+val OrangePlayer1  = Color(0xFFFF6B35)
+val BluePlayer2    = Color(0xFF4A90D9)
+
+/* --- Bomb --- */
+val BombRed = Color(0xFFFF3B30)
+
+/* --- Overlay --- */
+val DimOverlay = Color(0xB3000000)
