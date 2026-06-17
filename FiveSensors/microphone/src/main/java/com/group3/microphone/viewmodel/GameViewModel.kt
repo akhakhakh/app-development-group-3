@@ -7,13 +7,19 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.group3.microphone.CHARACTER_HEIGHT_FRACTION
-import com.group3.microphone.SoundManager
 import com.group3.microphone.CHARACTER_X_FRACTION
+import com.group3.microphone.DifficultyConfig
+import com.group3.microphone.DifficultyScaler
 import com.group3.microphone.INITIAL_CHARACTER_Y
 import com.group3.microphone.JUMP_MAX_AMPLITUDE
 import com.group3.microphone.Platform
+import com.group3.microphone.SoundManager
 import com.group3.microphone.audio.MicAudioRecorder
 import com.group3.microphone.detector.JumpDetector
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.sin
+import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,27 +28,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.random.Random
 
 private const val JUMP_VISUAL_DURATION_MS = 600L
 
-// ── Horizontal scrolling ─────────────────────────────────────────────────────
-private const val SCROLL_SPEED = 0.12f        // canvas-widths per second (world moves left)
+// ── Spawn trigger (not difficulty-dependent) ─────────────────────────────────
 private const val SPAWN_TRIGGER_X = 0.60f     // spawn next platform when rightmost crosses here
-private const val PLATFORM_MIN_H_GAP = 0.08f  // min horizontal gap between platforms
-private const val PLATFORM_MAX_H_GAP = 0.22f
-private const val PLATFORM_MIN_WIDTH = 0.20f  // fraction of canvas width
-private const val PLATFORM_MAX_WIDTH = 0.40f
-private const val PLATFORM_MIN_Y = 0.35f      // fraction of canvas height (top of spawn range); kept below cloud zone
-private const val PLATFORM_MAX_Y = 0.70f      // fraction of canvas height (bottom of spawn range)
-private const val MIN_Y_SEPARATION = 0.12f    // consecutive platforms must differ by at least this
 
 // ── Character physics — all tunable ─────────────────────────────────────────
-private const val GRAVITY = 0.70f            // canvas-heights / s²
-private const val MAX_FALL_SPEED = 1.50f     // terminal velocity
-private const val JUMP_VELOCITY_BASE = 0.28f // minimum upward speed on any jump
-private const val JUMP_VELOCITY_SCALE = 0.55f// extra speed proportional to voice amplitude
+private const val GRAVITY            = 0.70f   // canvas-heights / s²
+private const val MAX_FALL_SPEED     = 1.50f   // terminal velocity
+private const val JUMP_VELOCITY_BASE = 0.28f   // minimum upward speed on any jump
+private const val JUMP_VELOCITY_SCALE = 0.55f  // extra speed proportional to voice amplitude
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -87,6 +83,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var characterLandedPlatformId: Int? = null
     private val scoredPlatformIds = mutableSetOf<Int>()
     private val passedPlatformIds = mutableSetOf<Int>()
+    private val everLandedPlatformIds = mutableSetOf<Int>()
+    private var consecutiveSkips = 0
 
     private var listeningJob: Job? = null
     private var resetJob: Job? = null
@@ -197,9 +195,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _score.value = 0
         passedPlatformIds.clear()
         scoredPlatformIds.clear()
+        everLandedPlatformIds.clear()
+        consecutiveSkips = 0
         val startY = INITIAL_CHARACTER_Y + CHARACTER_HEIGHT_FRACTION
         lastPlatformY = startY
 
+        // Always spawn initial platforms at the easiest difficulty (score = 0).
+        val diff = DifficultyScaler.forScore(0)
         val startWidth = 0.32f
         val startPlatform = Platform(
             id = nextPlatformId++,
@@ -210,37 +212,68 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         characterLandedPlatformId = startPlatform.id
 
         val list = mutableListOf(startPlatform)
-        var x = startPlatform.x + startWidth + nextHGap()
+        var x = startPlatform.x + startWidth + nextHGap(diff)
         while (x < 1.3f) {
-            val p = newPlatform(x)
+            val p = newPlatform(x, diff)
             list.add(p)
-            x += p.widthFraction + nextHGap()
+            x += p.widthFraction + nextHGap(diff)
         }
         return list
     }
 
-    /** Scroll platforms left only while the character is airborne — voice drives all progress. */
+    /**
+     * Scroll platforms left, advance moving-platform oscillation, score passed platforms,
+     * and spawn new platforms at the right edge.
+     */
     private fun tickPlatforms(deltaSeconds: Float) {
-        val scrollDelta = if (characterLandedPlatformId == null) SCROLL_SPEED * deltaSeconds else 0f
-        val moved = _platforms.value
-            .map { it.copy(x = it.x - scrollDelta) }
-            .filter { it.x + it.widthFraction > 0f }
+        val diff = DifficultyScaler.forScore(_score.value)
+        val scrollDelta = if (characterLandedPlatformId == null) diff.scrollSpeed * deltaSeconds else 0f
+
+        // Move every platform left by scrollDelta; also advance oscillation phase for moving platforms.
+        val moved = _platforms.value.map { p ->
+            val newScrollX = p.scrollX - scrollDelta
+            if (p.moveAmplitude == 0f) {
+                p.copy(x = newScrollX, scrollX = newScrollX)
+            } else {
+                val newPhase = p.movePhase + p.moveSpeed * deltaSeconds
+                val newX = newScrollX + sin(newPhase.toDouble()).toFloat() * p.moveAmplitude
+                p.copy(x = newX, scrollX = newScrollX, movePhase = newPhase)
+            }
+        // Keep platforms that are still (or could still oscillate into) the visible area.
+        }.filter { it.scrollX + it.widthFraction + it.moveAmplitude > 0f }
+
+        // Score every platform whose scroll-based right-edge has passed the character's X.
+        // Using scrollX (not x) prevents oscillation from prematurely triggering the score.
+        moved.forEach { p ->
+            if (p.id != 0 &&
+                p.scrollX + p.widthFraction < CHARACTER_X_FRACTION &&
+                scoredPlatformIds.add(p.id)
+            ) {
+                if (p.id in everLandedPlatformIds) {
+                    consecutiveSkips = 0
+                    _score.value += 1
+                } else {
+                    consecutiveSkips++
+                    _score.value += consecutiveSkips
+                }
+            }
+        }
 
         val result = moved.toMutableList()
-        val rightmost = moved.maxByOrNull { it.x }
-        if (rightmost == null || rightmost.x < SPAWN_TRIGGER_X) {
-            val gap = nextHGap()
+        val rightmost = moved.maxByOrNull { it.scrollX }
+        if (rightmost == null || rightmost.scrollX < SPAWN_TRIGGER_X) {
+            val gap = nextHGap(diff)
             val spawnX = if (rightmost != null)
-                (rightmost.x + rightmost.widthFraction + gap).coerceAtLeast(1.0f)
+                (rightmost.scrollX + rightmost.widthFraction + gap).coerceAtLeast(1.0f)
             else 1.0f
-            result.add(newPlatform(spawnX))
+            result.add(newPlatform(spawnX, diff))
         }
         _platforms.value = result
     }
 
     /** Gravity, landing, and game-over check. All in screen-Y coordinates. */
     private fun tickCharacter(platforms: List<Platform>, deltaSeconds: Float) {
-        // Stay pinned to landed platform until it scrolls past the character's X.
+        // Stay pinned to landed platform until its visible x edge scrolls past the character.
         val landed = characterLandedPlatformId?.let { id -> platforms.find { it.id == id } }
         if (landed != null) {
             if (CHARACTER_X_FRACTION in landed.x..(landed.x + landed.widthFraction)) {
@@ -254,53 +287,50 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         characterVelocityY = (characterVelocityY + GRAVITY * deltaSeconds)
             .coerceAtMost(MAX_FALL_SPEED)
 
-        // prevY = position at END of the previous tick (written there by _characterY.value = newY,
-        // or by the pinned/landing writes). Updated every frame that reaches this point.
-        val prevY     = _characterY.value
-        val newY      = prevY + characterVelocityY * deltaSeconds
-        val prevBottom = prevY + CHARACTER_HEIGHT_FRACTION
-        val newBottom  = newY  + CHARACTER_HEIGHT_FRACTION
+        val prevY      = _characterY.value
+        val newY       = prevY + characterVelocityY * deltaSeconds
+        val prevBottom = prevY  + CHARACTER_HEIGHT_FRACTION
+        val newBottom  = newY   + CHARACTER_HEIGHT_FRACTION
 
-        // Pass 1 — mark every platform whose top is already above (lower yFraction than) the
-        // character's current bottom as permanently ineligible for landing this flight.
-        // Runs unconditionally (rising OR falling) so that rising-through-a-platform is caught.
+        // Pass 1 — mark every platform whose top is already below (larger yFraction than)
+        // the character's current bottom as ineligible for landing on this flight.
         platforms.forEach { p ->
             if (CHARACTER_X_FRACTION >= p.x && CHARACTER_X_FRACTION <= p.x + p.widthFraction) {
                 if (prevBottom > p.yFraction) {
-                    if (passedPlatformIds.add(p.id)) {   // add() returns true on first insertion
+                    if (passedPlatformIds.add(p.id)) {
                         Log.d(TAG, "passed  p#${p.id} top=${p.yFraction} | prevBot=$prevBottom vel=$characterVelocityY")
                     }
                 }
             }
         }
 
-        // Pass 2 — landing check: only when falling, only against ALL platforms not yet passed,
-        // picking the topmost (smallest yFraction) platform the character's bottom just crossed.
-        // Condition: character bottom was AT OR ABOVE platform top last frame (prevBottom <= yFrac)
-        //            AND is now AT OR BELOW platform top this frame (newBottom >= yFrac).
+        // Pass 2 — landing check: only when falling, topmost eligible platform that
+        // the character's bottom just crossed.
         if (characterVelocityY > 0f) {
             val hit = platforms
                 .filter { p ->
                     p.id !in passedPlatformIds &&
                     CHARACTER_X_FRACTION >= p.x && CHARACTER_X_FRACTION <= p.x + p.widthFraction &&
-                    prevBottom <= p.yFraction &&    // was above (or at) the top last frame
-                    newBottom  >= p.yFraction       // is now at or below the top this frame
+                    prevBottom <= p.yFraction &&
+                    newBottom  >= p.yFraction
                 }
-                .minByOrNull { it.yFraction }       // land on the highest (smallest-Y) candidate
+                .minByOrNull { it.yFraction }
 
             if (hit != null) {
                 Log.d(TAG,
                     "LAND    p#${hit.id} top=${hit.yFraction} | " +
                     "prevBot=$prevBottom newBot=$newBottom vel=$characterVelocityY passed=$passedPlatformIds"
                 )
-                _characterY.value     = hit.yFraction - CHARACTER_HEIGHT_FRACTION
-                characterVelocityY    = 0f
-                characterLandedPlatformId = hit.id
+                _characterY.value          = hit.yFraction - CHARACTER_HEIGHT_FRACTION
+                characterVelocityY         = 0f
+                characterLandedPlatformId  = hit.id
                 passedPlatformIds.clear()
                 SoundManager.playLand()
                 if (hit.id != 0 && scoredPlatformIds.add(hit.id)) {
-                    _score.value++
+                    consecutiveSkips = 0
+                    _score.value += 1
                 }
+                everLandedPlatformIds.add(hit.id)
                 return
             }
         }
@@ -308,6 +338,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _characterY.value = newY
         if (newY > 1.05f) {
             _isGameOver.value = true
+            stopListening()
             checkAndSaveBestScore(_score.value)
             SoundManager.playGameOver()
         }
@@ -317,19 +348,40 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         private const val TAG = "GameVM"
     }
 
-    /** Random-height platform; consecutive platforms always differ in Y by at least MIN_Y_SEPARATION. */
-    private fun newPlatform(x: Float): Platform {
-        val width = PLATFORM_MIN_WIDTH + random.nextFloat() * (PLATFORM_MAX_WIDTH - PLATFORM_MIN_WIDTH)
+    /**
+     * Spawn a new platform at [x] using the current difficulty config.
+     * Platforms at tier 3+ have a chance to oscillate horizontally (moving platforms).
+     */
+    private fun newPlatform(x: Float, diff: DifficultyConfig): Platform {
+        val width = diff.platformMinWidth +
+                random.nextFloat() * (diff.platformMaxWidth - diff.platformMinWidth)
         var y: Float
         var attempts = 0
         do {
-            y = PLATFORM_MIN_Y + random.nextFloat() * (PLATFORM_MAX_Y - PLATFORM_MIN_Y)
+            y = diff.platformMinY + random.nextFloat() * (diff.platformMaxY - diff.platformMinY)
             attempts++
-        } while (abs(y - lastPlatformY) < MIN_Y_SEPARATION && attempts < 10)
+        } while (abs(y - lastPlatformY) < diff.minYSeparation && attempts < 10)
         lastPlatformY = y
-        return Platform(id = nextPlatformId++, x = x, yFraction = y, widthFraction = width)
+
+        val isMoving = diff.movingPlatformChance > 0f &&
+                random.nextFloat() < diff.movingPlatformChance
+        return if (isMoving) {
+            val phase = random.nextFloat() * 2f * PI.toFloat()
+            Platform(
+                id            = nextPlatformId++,
+                x             = x + sin(phase.toDouble()).toFloat() * diff.movingPlatformAmplitude,
+                yFraction     = y,
+                widthFraction = width,
+                scrollX       = x,
+                moveAmplitude = diff.movingPlatformAmplitude,
+                moveSpeed     = diff.movingPlatformSpeed,
+                movePhase     = phase
+            )
+        } else {
+            Platform(id = nextPlatformId++, x = x, yFraction = y, widthFraction = width)
+        }
     }
 
-    private fun nextHGap(): Float =
-        PLATFORM_MIN_H_GAP + random.nextFloat() * (PLATFORM_MAX_H_GAP - PLATFORM_MIN_H_GAP)
+    private fun nextHGap(diff: DifficultyConfig): Float =
+        diff.platformMinHGap + random.nextFloat() * (diff.platformMaxHGap - diff.platformMinHGap)
 }
