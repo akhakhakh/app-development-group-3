@@ -1,4 +1,4 @@
-package com.group3.myapplication
+package com.group3.gyromaze
 
 import org.junit.Test
 
