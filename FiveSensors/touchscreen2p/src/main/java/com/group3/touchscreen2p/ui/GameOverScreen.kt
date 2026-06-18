@@ -36,6 +36,8 @@ fun GameOverScreen(
     winner: Int,
     score1: Int,
     score2: Int,
+    bestCombo1: Int,
+    bestCombo2: Int,
     onPlayAgain: () -> Unit,
     onHome: () -> Unit
 ) {
@@ -90,10 +92,12 @@ fun GameOverScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "P1", fontSize = 14.sp, color = OrangePlayer1, fontWeight = FontWeight.Bold)
                 Text(text = "$score1", fontSize = 48.sp, color = OrangePlayer1, fontWeight = FontWeight.ExtraBold)
+                Text(text = "Best combo: ${bestCombo1}x", fontSize = 12.sp, color = GreyText)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "P2", fontSize = 14.sp, color = BluePlayer2, fontWeight = FontWeight.Bold)
                 Text(text = "$score2", fontSize = 48.sp, color = BluePlayer2, fontWeight = FontWeight.ExtraBold)
+                Text(text = "Best combo: ${bestCombo2}x", fontSize = 12.sp, color = GreyText)
             }
         }
 
