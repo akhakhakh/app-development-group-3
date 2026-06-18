@@ -5,19 +5,36 @@ import android.graphics.Paint
 import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -27,29 +44,69 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import android.media.AudioAttributes
+import android.media.SoundPool
+import androidx.compose.runtime.DisposableEffect
+import com.group3.touchscreen2p.R
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.group3.touchscreen2p.Constants
+import com.group3.touchscreen2p.data.SettingsRepository
 import com.group3.touchscreen2p.model.Phase
 import com.group3.touchscreen2p.model.TargetType
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.BombRed
-import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
+import com.group3.touchscreen2p.ui.theme.NavyCard
 import com.group3.touchscreen2p.ui.theme.NavySurface
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
 import com.group3.touchscreen2p.ui.theme.Yellow
 import com.group3.touchscreen2p.viewmodel.GameViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onGameOver: (winner: Int, score1: Int, score2: Int, bestCombo: Int) -> Unit
+    onGameOver: (winner: Int, score1: Int, score2: Int, bestCombo1: Int, bestCombo2: Int,
+                 trickHits1: Int, trickHits2: Int, bombHits1: Int, bombHits2: Int) -> Unit,
+    onHome: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+
+    val context = LocalContext.current
+    val settingsRepository = remember { SettingsRepository(context) }
+    val volume by settingsRepository.sfxVolume.collectAsState(initial = 0.8f)
+    val sfxEnabled by settingsRepository.sfxEnabled.collectAsState(initial = true)
+
+    val soundPool = remember {
+        SoundPool.Builder()
+            .setMaxStreams(4)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            .build()
+    }
+
+    val bullseyeSoundId = remember { soundPool.load(context, R.raw.game_click_short, 1) }
+    val trickSoundId = remember { soundPool.load(context, R.raw.trick_click_short, 1) }
+    val bombSoundId = remember { soundPool.load(context, R.raw.bomb_click_short, 1) }
+    val scope = rememberCoroutineScope()
+    DisposableEffect(Unit) {
+        onDispose { soundPool.release() }
+    }
+
+    val sfxEnabledRef = rememberUpdatedState(sfxEnabled)
+    val volumeRef = rememberUpdatedState(volume)
+
 
     LaunchedEffect(Unit) {
         viewModel.startGame()
@@ -57,7 +114,10 @@ fun GameScreen(
 
     LaunchedEffect(state.phase) {
         if (state.phase == Phase.GAME_OVER) {
-            onGameOver(state.winner, state.score1, state.score2, state.bestCombo)
+            onGameOver(state.winner, state.score1, state.score2,
+                state.bestCombo1, state.bestCombo2,
+                state.trickHits1, state.trickHits2,
+                state.bombHits1, state.bombHits2)
         }
     }
 
@@ -99,6 +159,15 @@ fun GameScreen(
                                     }
 
                                 if (hitTarget != null) {
+                                    if (sfxEnabledRef.value) {
+                                        val soundId = when (hitTarget.type) {
+                                            TargetType.BULLSEYE -> bullseyeSoundId
+                                            TargetType.TRICK -> trickSoundId
+                                            TargetType.BOMB -> bombSoundId
+                                        }
+                                        soundPool.play(soundId, volumeRef.value,
+                                            volumeRef.value, 1, 0, 1f)
+                                    }
                                     viewModel.onTargetHit(player, hitTarget, nx, ny)
                                 }
                             }
@@ -191,7 +260,8 @@ fun GameScreen(
                 val progress = ((now - effect.startTimeMs) /
                         Constants.FLOATING_EFFECT_DURATION_MS.toFloat()).coerceIn(0f, 1f)
                 val cx = effect.normalizedX * size.width
-                val cy = effect.normalizedY * size.height - (with(density) { 60.dp.toPx() } * progress)
+                val cy =
+                    effect.normalizedY * size.height - (with(density) { 60.dp.toPx() } * progress)
                 val effectColor = when (effect.type) {
                     TargetType.BULLSEYE -> if (effect.player == 1) OrangePlayer1 else BluePlayer2
                     TargetType.TRICK -> Yellow
@@ -216,6 +286,10 @@ fun GameScreen(
             score = state.score2,
             phase = state.phase,
             countdownValue = state.countdownValue,
+            combo = state.combo2,
+            comboWindowEndMs = state.comboWindowEndMs2,
+            onPauseClick = {
+                viewModel.pauseGame() },
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
@@ -228,6 +302,10 @@ fun GameScreen(
             score = state.score1,
             phase = state.phase,
             countdownValue = state.countdownValue,
+            combo = state.combo1,
+            comboWindowEndMs = state.comboWindowEndMs1,
+            onPauseClick = {
+                viewModel.pauseGame() },
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
@@ -247,6 +325,46 @@ fun GameScreen(
                 )
             }
         }
+
+        if (state.phase == Phase.PAUSED) {
+            Dialog(onDismissRequest = { viewModel.resumeGame() }) {
+                Column(
+                    modifier = Modifier
+                        .background(NavyCard, RoundedCornerShape(16.dp))
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("PAUSED")
+
+                    Slider(
+                        value = volume,
+                        onValueChange = { newVolume ->
+                            scope.launch { settingsRepository.setSfxVolume(newVolume) }
+                        }
+                    )
+
+                    Button(
+                        onClick = { viewModel.resumeGame() },
+                        modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                    ) { Text("RESUME") }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.startGame() },
+                        modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                    ) { Text("REPLAY") }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onHome,
+                        modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                    ) { Text("HOME") }
+                }
+            }
+        }
+
     }
 }
 
@@ -256,9 +374,28 @@ private fun PlayerHud(
     score: Int,
     phase: Phase,
     countdownValue: Int,
+    combo: Int,
+    comboWindowEndMs: Long,
+    onPauseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val playerColor = if (player == 1) OrangePlayer1 else BluePlayer2
+    val comboActive = combo >=
+            Constants.COMBO_THRESHOLD
+
+    var now by remember {
+        mutableStateOf(SystemClock.elapsedRealtime()) }
+    LaunchedEffect(combo, phase) {
+        while (combo > 0 && phase == Phase.PLAYING) {
+            now = SystemClock.elapsedRealtime()
+            delay(16L)
+        }
+    }
+
+    val comboRemainingFraction = if (combo > 0) {
+        ((comboWindowEndMs - now).toFloat() /
+                Constants.COMBO_WINDOW_MS).coerceIn(0f, 1f)
+    } else 0f
 
     Box(
         modifier = modifier
@@ -273,13 +410,32 @@ private fun PlayerHud(
             color = playerColor.copy(alpha = 0.7f),
             modifier = Modifier.align(Alignment.CenterStart)
         )
-        Text(
-            text = "$score",
-            fontSize = 36.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = playerColor,
-            modifier = Modifier.align(Alignment.Center)
-        )
+        Row(
+            modifier = Modifier.align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "$score",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = playerColor
+            )
+            if (phase == Phase.PLAYING || phase == Phase.PAUSED) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(NavySurface.copy(alpha = 0.9f))
+                        .border(2.dp, Yellow, CircleShape)
+                        .clickable(onClick = onPauseClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "❙❙", color = Yellow, fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp)
+                }
+            }
+        }
         if (phase == Phase.COUNTDOWN) {
             Text(
                 text = "$countdownValue",
@@ -288,13 +444,32 @@ private fun PlayerHud(
                 color = Yellow,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
-        } else {
+        } else if (comboActive) {
             Text(
-                text = "→ ${Constants.WIN_SCORE}",
+                text = "${combo}x COMBO!",
                 fontSize = 12.sp,
-                color = GreyText,
+                fontWeight = FontWeight.Bold,
+                color = Yellow,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
+        }
+
+        if (combo > 0) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(NavyBackground)
+            ) {
+                Box(
+                    modifier = Modifier
+
+                        .fillMaxWidth(comboRemainingFraction)
+                        .height(3.dp)
+                        .background(Yellow)
+                )
+            }
         }
     }
 }

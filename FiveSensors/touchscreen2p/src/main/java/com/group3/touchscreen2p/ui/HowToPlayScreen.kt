@@ -90,7 +90,7 @@ fun HowToPlayScreen(onBack: () -> Unit) {
 
         StepCard(
             number = "5",
-            title = "FIRST TO 10 WINS",
+            title = "FIRST TO 20 WINS",
             description = "Race to 10 points before your opponent."
         )
 
