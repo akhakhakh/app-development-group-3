@@ -23,7 +23,9 @@ object Constants {
 
     /* --- Targets --- */
     const val MAX_TARGETS_PER_PLAYER = 3
-    const val MAX_TARGETS_PER_PLAYER_LATE = 8 // cap once leadingScore reaches WIN_SCORE
+    const val MAX_TARGETS_PER_PLAYER_LATE = 15 // cap once leadingScore reaches WIN_SCORE
+    const val MAX_TARGETS_RAMP_START_SCORE = 0 // target count starts increasing immediately
+    const val MAX_TARGETS_RAMP_END_SCORE = 18 // reaches MAX_TARGETS_PER_PLAYER_LATE by this score
     const val TARGET_MIN_SPACING = 0.22f // minimum distance between targets
     const val LIFETIME_REDUCTION_START_SCORE = 4 // score at which targets start shrinking faster
     const val LIFETIME_SHRINK_EXPONENT = 2f // >1 = shrink ramps up faster as score nears WIN_SCORE

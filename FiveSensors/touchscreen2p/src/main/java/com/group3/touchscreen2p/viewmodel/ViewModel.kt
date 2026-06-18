@@ -143,16 +143,14 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    private fun currentMaxTargetsPerPlayer(leadingScore:
-                                           Int): Int {
-        if (leadingScore <=
-            Constants.LIFETIME_REDUCTION_START_SCORE) {
+    private fun currentMaxTargetsPerPlayer(leadingScore: Int): Int {
+        if (leadingScore <= Constants.MAX_TARGETS_RAMP_START_SCORE) {
             return Constants.MAX_TARGETS_PER_PLAYER
         }
         val t = ((leadingScore -
-                Constants.LIFETIME_REDUCTION_START_SCORE).toFloat() /
-                (Constants.WIN_SCORE -
-                        Constants.LIFETIME_REDUCTION_START_SCORE).toFloat())
+                Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat() /
+                (Constants.MAX_TARGETS_RAMP_END_SCORE -
+                        Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat())
             .coerceIn(0f, 1f)
         val cap = Constants.MAX_TARGETS_PER_PLAYER +
                 (Constants.MAX_TARGETS_PER_PLAYER_LATE -
