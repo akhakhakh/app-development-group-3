@@ -7,5 +7,7 @@ data class GameState(
     val highScore: Int = 0,
     val isPaused: Boolean = false,
     val isGameOver: Boolean = false,
-    val orbs: List<FallingOrb> = emptyList()
+    val isLevelComplete: Boolean = false,
+    val orbs: List<FallingOrb> = emptyList(),
+    val timeRemaining: Int = 60
 )

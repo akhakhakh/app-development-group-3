@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import com.group3.touchscreen2p.model.Target
 import com.group3.touchscreen2p.model.TargetType
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class GameViewModel : ViewModel() {
     private val _state = MutableStateFlow(GameState())
@@ -26,6 +28,33 @@ class GameViewModel : ViewModel() {
     private var countdownJob: Job? = null
     private var gameLoopJob: Job? = null
     private var spawnJob: Job? = null
+
+    private var pauseStartMs: Long = 0
+
+    fun pauseGame() {
+        if (_state.value.phase != Phase.PLAYING) return
+        pauseStartMs = SystemClock.elapsedRealtime()
+        gameLoopJob?.cancel()
+        spawnJob?.cancel()
+        _state.update { it.copy(phase = Phase.PAUSED) }
+    }
+
+    fun resumeGame() {
+        if (_state.value.phase != Phase.PAUSED) return
+        val pausedDurationMs = SystemClock.elapsedRealtime() - pauseStartMs
+        _state.update { s ->
+            s.copy(
+                phase = Phase.PLAYING,
+                targets = s.targets.map { it.copy(spawnTimeMs = it.spawnTimeMs + pausedDurationMs) },
+                floatingEffects = s.floatingEffects.map { it.copy(startTimeMs =
+                    it.startTimeMs + pausedDurationMs) },
+                comboWindowEndMs1 = if (s.combo1 > 0) s.comboWindowEndMs1 + pausedDurationMs else s.comboWindowEndMs1,
+                comboWindowEndMs2 = if (s.combo2 > 0) s.comboWindowEndMs2 + pausedDurationMs else s.comboWindowEndMs2
+            )
+        }
+        launchGameLoop()
+        launchSpawner()
+    }
 
     private fun cancelAll() {
         countdownJob?.cancel()
@@ -66,7 +95,15 @@ class GameViewModel : ViewModel() {
                     val aliveEffects = s.floatingEffects.filter { e ->
                         now - e.startTimeMs < Constants.FLOATING_EFFECT_DURATION_MS
                     }
-                    s.copy(targets = aliveTargets, floatingEffects = aliveEffects)
+                    val combo1Expired = s.combo1 > 0 && now > s.comboWindowEndMs1
+                    val combo2Expired = s.combo2 > 0 && now > s.comboWindowEndMs2
+
+                    s.copy(
+                        targets = aliveTargets,
+                        floatingEffects = aliveEffects,
+                        combo1 = if (combo1Expired) 0 else s.combo1,
+                        combo2 = if (combo2Expired) 0 else s.combo2
+                    )
                 }
                 delay(Constants.GAME_TICK_MS)
             }
@@ -77,7 +114,8 @@ class GameViewModel : ViewModel() {
     private fun launchSpawner() {
         spawnJob = viewModelScope.launch {
             while (isActive) {
-                delay(Constants.SPAWN_INTERVAL_MS)
+                val leadingScore = maxOf(_state.value.score1, _state.value.score2)
+                delay(currentSpawnIntervalMs(leadingScore))
                 if (_state.value.phase == Phase.PLAYING) {
                     spawnTargets()
                 }
@@ -91,18 +129,51 @@ class GameViewModel : ViewModel() {
             var list = s.targets
             val specialsEnabled = maxOf(s.score1, s.score2) >= Constants.SPECIALS_UNLOCK_SCORE
             val leadingScore = maxOf(s.score1, s.score2)
+            val maxTargets = currentMaxTargetsPerPlayer(leadingScore)
 
-            if (list.count { it.player == 1 } < Constants.MAX_TARGETS_PER_PLAYER) {
+            if (list.count { it.player == 1 } < maxTargets) {
                 list = list + buildTarget(player = 1, now = now, specialsEnabled =
                     specialsEnabled, existing = list, leadingScore = leadingScore)
             }
-            if (list.count { it.player == 2 } < Constants.MAX_TARGETS_PER_PLAYER) {
+            if (list.count { it.player == 2 } < maxTargets) {
                 list = list + buildTarget(player = 2, now = now, specialsEnabled =
                     specialsEnabled, existing = list, leadingScore = leadingScore)
             }
 
             s.copy(targets = list)
         }
+    }
+
+    private fun currentSpawnIntervalMs(leadingScore: Int):
+            Long {
+        if (leadingScore <=
+            Constants.MAX_TARGETS_RAMP_START_SCORE) {
+            return Constants.SPAWN_INTERVAL_MS
+        }
+        val t = ((leadingScore -
+                Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat() /
+                (Constants.MAX_TARGETS_RAMP_END_SCORE -
+                        Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat())
+            .coerceIn(0f, 1f)
+        val interval = Constants.SPAWN_INTERVAL_MS -
+                (Constants.SPAWN_INTERVAL_MS -
+                        Constants.SPAWN_INTERVAL_MIN_MS) * t
+        return interval.toLong().coerceAtLeast(Constants.SPAWN_INTERVAL_MIN_MS)
+    }
+
+    private fun currentMaxTargetsPerPlayer(leadingScore: Int): Int {
+        if (leadingScore <= Constants.MAX_TARGETS_RAMP_START_SCORE) {
+            return Constants.MAX_TARGETS_PER_PLAYER
+        }
+        val t = ((leadingScore -
+                Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat() /
+                (Constants.MAX_TARGETS_RAMP_END_SCORE -
+                        Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat())
+            .coerceIn(0f, 1f)
+        val cap = Constants.MAX_TARGETS_PER_PLAYER +
+                (Constants.MAX_TARGETS_PER_PLAYER_LATE -
+                        Constants.MAX_TARGETS_PER_PLAYER) * t
+        return cap.roundToInt()
     }
 
     private fun buildTarget(player: Int, now: Long, specialsEnabled: Boolean,
@@ -112,14 +183,32 @@ class GameViewModel : ViewModel() {
         var x: Float
         var y: Float
         var attempts = 0
+
+        val type = if (!specialsEnabled) { TargetType.BULLSEYE
+        } else {
+            when (Random.nextInt(10)) {
+                in 0..6 -> TargetType.BULLSEYE // 70%
+                in 7..8 -> TargetType.TRICK // 20%
+                else -> TargetType.BOMB // 10%
+            }
+        }
+
+        val lifetimeFloor = if (type == TargetType.BULLSEYE)
+        {
+            Constants.TARGET_LIFETIME_MIN_MS
+        } else {
+            Constants.SPECIAL_TARGET_LIFETIME_MIN_MS
+        }
+
         val lifetime = if (leadingScore <
             Constants.LIFETIME_REDUCTION_START_SCORE) {
             Constants.TARGET_LIFETIME_MS
         } else {
             val t = (leadingScore - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat() /
                     (Constants.WIN_SCORE - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat()
+            val curvedT = t.pow(Constants.LIFETIME_SHRINK_EXPONENT)
             (Constants.TARGET_LIFETIME_MS - (Constants.TARGET_LIFETIME_MS
-                    - Constants.TARGET_LIFETIME_MIN_MS) * t)
+                    - lifetimeFloor) * curvedT)
                 .toLong()
                 .coerceAtLeast(Constants.TARGET_LIFETIME_MIN_MS)
         }
@@ -133,14 +222,7 @@ class GameViewModel : ViewModel() {
                 val dy = y - t.normalizedY
                 dx * dx + dy * dy < Constants.TARGET_MIN_SPACING * Constants.TARGET_MIN_SPACING
             })
-        val type = if (!specialsEnabled) { TargetType.BULLSEYE
-        } else {
-            when (Random.nextInt(10)) {
-                in 0..6 -> TargetType.BULLSEYE // 70%
-                in 7..8 -> TargetType.TRICK // 20%
-                else -> TargetType.BOMB // 10%
-            }
-        }
+
 
         return Target(
             player = player, normalizedX = x, normalizedY = y, spawnTimeMs = now, lifetimeMs =
@@ -150,33 +232,39 @@ class GameViewModel : ViewModel() {
 
     fun onTargetHit(player: Int, target: Target, normX: Float, normY: Float) {
         if (_state.value.phase != Phase.PLAYING) return
-
+        val now = SystemClock.elapsedRealtime()
         _state.update { s ->
-            val points = when (target.type) {
+            val oldCombo = if (player == 1) s.combo1 else s.combo2
+            val isCorrect = target.type == TargetType.BULLSEYE
+            val newCombo = if (isCorrect) oldCombo + 1 else 0
+            val comboActive = newCombo >= Constants.COMBO_THRESHOLD
+
+            val basePoints = when (target.type) {
                 TargetType.BULLSEYE -> Constants.POINTS_BULLSEYE
                 TargetType.TRICK -> Constants.POINTS_TRICK
                 TargetType.BOMB -> Constants.POINTS_BOMB
             }
+            val points = if (isCorrect && comboActive) basePoints *
+                    Constants.COMBO_MULTIPLIER else basePoints
 
-            val newScore1 = if (player == 1) (s.score1 + points).coerceAtLeast(Constants.MIN_SCORE)
-            else s.score1
-
-            val newScore2 = if (player == 2) (s.score2 + points).coerceAtLeast(Constants.MIN_SCORE)
-            else s.score2
-
+            val newScore1 = if (player == 1) (s.score1 +
+                    points).coerceAtLeast(Constants.MIN_SCORE) else s.score1
+            val newScore2 = if (player == 2) (s.score2 +
+                    points).coerceAtLeast(Constants.MIN_SCORE) else s.score2
             val newTargets = s.targets.filter { it.id != target.id }
 
             val effect = FloatingEffect(
-                text = when (target.type) {
-                    TargetType.TRICK -> "-1 TRICK!"
-                    TargetType.BOMB -> "-2 BOOM!"
-                    TargetType.BULLSEYE -> "+1"
+                text = when {
+                    target.type == TargetType.TRICK -> "-1 TRICK!"
+                    target.type == TargetType.BOMB -> "-2 BOOM!"
+                    comboActive -> "+$points COMBO!"
+                    else -> "+$points"
                 },
                 normalizedX = normX,
                 normalizedY = normY,
                 player = player,
                 type = target.type,
-                startTimeMs = SystemClock.elapsedRealtime()
+                startTimeMs = now
             )
 
             val newPhase = when {
@@ -191,13 +279,38 @@ class GameViewModel : ViewModel() {
                 else -> 0
             }
 
+            val newCombo1 = if (player == 1) newCombo else s.combo1
+            val newCombo2 = if (player == 2) newCombo else s.combo2
+            val newComboWindowEndMs1 = if (player == 1 && isCorrect) now +
+                    Constants.COMBO_WINDOW_MS else s.comboWindowEndMs1
+            val newComboWindowEndMs2 = if (player == 2 && isCorrect) now +
+                    Constants.COMBO_WINDOW_MS else s.comboWindowEndMs2
+
+            val newTrickHits1 = if (player == 1 && target.type ==
+                TargetType.TRICK) s.trickHits1 + 1 else s.trickHits1
+            val newTrickHits2 = if (player == 2 && target.type ==
+                TargetType.TRICK) s.trickHits2 + 1 else s.trickHits2
+            val newBombHits1 = if (player == 1 && target.type ==
+                TargetType.BOMB) s.bombHits1 + 1 else s.bombHits1
+            val newBombHits2 = if (player == 2 && target.type ==
+                TargetType.BOMB) s.bombHits2 + 1 else s.bombHits2
             s.copy(
                 score1 = newScore1,
                 score2 = newScore2,
                 targets = newTargets,
                 floatingEffects = s.floatingEffects + effect,
                 phase = newPhase,
-                winner = newWinner
+                winner = newWinner,
+                combo1 = newCombo1,
+                combo2 = newCombo2,
+                comboWindowEndMs1 = newComboWindowEndMs1,
+                comboWindowEndMs2 = newComboWindowEndMs2,
+                bestCombo1 = maxOf(s.bestCombo1, newCombo1),
+                bestCombo2 = maxOf(s.bestCombo2, newCombo2),
+                trickHits1 = newTrickHits1,
+                trickHits2 = newTrickHits2,
+                bombHits1 = newBombHits1,
+                bombHits2 = newBombHits2
             )
         }
 

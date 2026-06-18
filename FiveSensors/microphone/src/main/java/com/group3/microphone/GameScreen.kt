@@ -225,8 +225,10 @@ fun GameScreenContent(
                         val top = p.yFraction * size.height
                         val w = p.widthFraction * size.width
                         if (left < size.width && left + w > 0f) {
+                            // Moving platforms rendered in orange so players can identify them.
+                            val platformColor = if (p.moveAmplitude > 0f) Color(0xFFE87C2A) else CharDark
                             drawRoundRect(
-                                color = CharDark,
+                                color = platformColor,
                                 topLeft = Offset(left, top),
                                 size = Size(w, platformH),
                                 cornerRadius = CornerRadius(platformH / 2)
