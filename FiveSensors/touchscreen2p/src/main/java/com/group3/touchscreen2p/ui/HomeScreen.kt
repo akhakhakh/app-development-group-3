@@ -20,17 +20,27 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
+import com.group3.touchscreen2p.data.SettingsRepository
 import com.group3.touchscreen2p.ui.theme.BlueBorder
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
@@ -41,12 +51,22 @@ import com.group3.touchscreen2p.ui.theme.OrangePlayer1
 import com.group3.touchscreen2p.ui.theme.BombRed
 import com.group3.touchscreen2p.ui.theme.White
 import com.group3.touchscreen2p.ui.theme.Yellow
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     onPlayClick: () -> Unit,
     onHowToPlayClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val settingsRepository = remember {
+        SettingsRepository(context)
+    }
+    val volume by
+    settingsRepository.sfxVolume.collectAsState(initial =
+        0.8f)
+    val scope = rememberCoroutineScope()
+    var showSettings by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -150,7 +170,7 @@ fun HomeScreen(
 
             // --- SETTINGS button ---
             OutlinedButton(
-                onClick  = { /* Sprint 2 */ },
+                onClick  = { showSettings = true },
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = White),
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp),
                 border   = BorderStroke(3.dp, BlueBorder),
@@ -166,7 +186,7 @@ fun HomeScreen(
 
             // --- Footer hint ---
             Text(
-                text = "FIRST 10 POINTS TO WINS",
+                text = "FIRST 20 POINTS TO WINS",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 color = GreyText,
@@ -178,6 +198,32 @@ fun HomeScreen(
 
             // --- Target Legend ---
             TargetLegend()
+        }
+    }
+    if (showSettings) {
+        Dialog(onDismissRequest = { showSettings = false }) {
+            Column(
+                modifier = Modifier
+                    .background(NavyCard, RoundedCornerShape(16.dp))
+                    .padding(24.dp),
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
+            ) {
+                Text("SETTINGS")
+
+                Slider(
+                    value = volume,
+                    onValueChange = { newVolume ->
+                        scope.launch {
+                            settingsRepository.setSfxVolume(newVolume) }
+                    }
+                )
+
+                Button(
+                    onClick = { showSettings = false },
+                    modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                ) { Text("CLOSE") }
+            }
         }
     }
 }
