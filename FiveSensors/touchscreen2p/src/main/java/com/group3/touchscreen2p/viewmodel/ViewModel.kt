@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import com.group3.touchscreen2p.model.Target
 import com.group3.touchscreen2p.model.TargetType
+import kotlin.math.pow
 
 class GameViewModel : ViewModel() {
     private val _state = MutableStateFlow(GameState())
@@ -153,8 +154,9 @@ class GameViewModel : ViewModel() {
         } else {
             val t = (leadingScore - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat() /
                     (Constants.WIN_SCORE - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat()
+            val curvedT = t.pow(Constants.LIFETIME_SHRINK_EXPONENT)
             (Constants.TARGET_LIFETIME_MS - (Constants.TARGET_LIFETIME_MS
-                    - Constants.TARGET_LIFETIME_MIN_MS) * t)
+                    - Constants.TARGET_LIFETIME_MIN_MS) * curvedT)
                 .toLong()
                 .coerceAtLeast(Constants.TARGET_LIFETIME_MIN_MS)
         }
