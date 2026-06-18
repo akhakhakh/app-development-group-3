@@ -1,0 +1,39 @@
+<!--
+  ~ Copyright (C) 2026 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="114dp"
+    android:height="144dp"
+    android:viewportWidth="114"
+    android:viewportHeight="144">
+  <path
+      android:pathData="M40,72C40,54.33 54.33,40 72,40C89.67,40 104,54.33 104,72C104,89.67 89.67,104 72,104C54.33,104 40,89.67 40,72Z">
+    <aapt:attr name="android:fillColor">
+      <gradient
+          android:centerX="72"
+          android:centerY="72"
+          android:gradientRadius="45.25"
+          android:type="radial">
+        <item android:offset="0" android:color="#FFFFFF00"/>
+        <item android:offset="0.5" android:color="#7FFFFF00"/>
+        <item android:offset="1" android:color="#00000000"/>
+      </gradient>
+    </aapt:attr>
+  </path>
+  <path
+      android:pathData="M52,72C52,60.95 60.95,52 72,52C83.04,52 92,60.95 92,72C92,83.04 83.04,92 72,92C60.95,92 52,83.04 52,72Z"
+      android:fillColor="#FFFF00"/>
+</vector>
