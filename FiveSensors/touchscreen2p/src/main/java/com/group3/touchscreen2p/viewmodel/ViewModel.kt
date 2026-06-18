@@ -271,7 +271,8 @@ class GameViewModel : ViewModel() {
                 combo2 = newCombo2,
                 comboWindowEndMs1 = newComboWindowEndMs1,
                 comboWindowEndMs2 = newComboWindowEndMs2,
-                bestCombo = maxOf(s.bestCombo, newCombo1, newCombo2)
+                bestCombo1 = maxOf(s.bestCombo1, newCombo1),
+                bestCombo2 = maxOf(s.bestCombo2, newCombo2)
             )
         }
 
