@@ -5,5 +5,6 @@ enum class Screen {
     INSTRUCTIONS,
     GAME,
     LVL_COMPLETE,
-    LVL_FAILED
+    LVL_FAILED,
+    GAME_COMPLETE
 }

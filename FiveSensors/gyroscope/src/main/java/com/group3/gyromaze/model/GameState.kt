@@ -24,5 +24,6 @@ data class GameState(
     val marbleVelocity: Vec2,
     val isLvlComplete: Boolean = false,
     val isGameOver: Boolean = false,
-    val elapsedSeconds: Float = 0f
+    val elapsedSeconds: Float = 0f,
+    val isTimerRunning: Boolean = false
 )
