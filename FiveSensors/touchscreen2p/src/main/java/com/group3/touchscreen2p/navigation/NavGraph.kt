@@ -36,8 +36,10 @@ fun TapBattleNavGraph(navController: NavHostController) {
             val viewModel: GameViewModel = viewModel()
             GameScreen(
                 viewModel = viewModel,
-                onGameOver = { winner, score1, score2, bestCombo1, bestCombo2 ->
-                    navController.navigate(Routes.gameOver(winner, score1, score2, bestCombo1, bestCombo2)) {
+                onGameOver = { winner, score1, score2, bestCombo1, bestCombo2, trickHits1, trickHits2, bombHits1,
+                               bombHits2 ->
+                    navController.navigate(Routes.gameOver(winner, score1, score2, bestCombo1,
+                        bestCombo2, trickHits1, trickHits2, bombHits1, bombHits2)) {
                         popUpTo(Routes.GAME) { inclusive = true }
                     }
                 },
@@ -52,7 +54,11 @@ fun TapBattleNavGraph(navController: NavHostController) {
                 navArgument("score1") { type = NavType.IntType },
                 navArgument("score2") { type = NavType.IntType },
                 navArgument("bestCombo1") { type = NavType.IntType },
-                navArgument("bestCombo2") { type = NavType.IntType }
+                navArgument("bestCombo2") { type = NavType.IntType },
+                navArgument("trickHits1") { type = NavType.IntType },
+                navArgument("trickHits2") { type = NavType.IntType },
+                navArgument("bombHits1") { type = NavType.IntType },
+                navArgument("bombHits2") { type = NavType.IntType }
             )
         ) { backStackEntry ->
             val winner = backStackEntry.arguments?.getInt("winner") ?: 0
@@ -60,6 +66,10 @@ fun TapBattleNavGraph(navController: NavHostController) {
             val score2 = backStackEntry.arguments?.getInt("score2") ?: 0
             val bestCombo1 = backStackEntry.arguments?.getInt("bestCombo1") ?: 0
             val bestCombo2 = backStackEntry.arguments?.getInt("bestCombo2") ?: 0
+            val trickHits1 = backStackEntry.arguments?.getInt("trickHits1") ?: 0
+            val trickHits2 = backStackEntry.arguments?.getInt("trickHits2") ?: 0
+            val bombHits1 = backStackEntry.arguments?.getInt("bombHits1") ?: 0
+            val bombHits2 = backStackEntry.arguments?.getInt("bombHits2") ?: 0
 
             GameOverScreen(
                 winner = winner,
@@ -67,6 +77,10 @@ fun TapBattleNavGraph(navController: NavHostController) {
                 score2 = score2,
                 bestCombo1 = bestCombo1,
                 bestCombo2 = bestCombo2,
+                trickHits1 = trickHits1,
+                trickHits2 = trickHits2,
+                bombHits1 = bombHits1,
+                bombHits2 = bombHits2,
                 onPlayAgain = {
                     navController.navigate(Routes.GAME) {
                         popUpTo(Routes.HOME)
