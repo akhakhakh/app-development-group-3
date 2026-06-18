@@ -69,7 +69,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onGameOver: (winner: Int, score1: Int, score2: Int, bestCombo: Int) -> Unit,
+    onGameOver: (winner: Int, score1: Int, score2: Int, bestCombo1: Int, bestCombo2: Int) -> Unit,
     onHome: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -85,7 +85,7 @@ fun GameScreen(
 
     LaunchedEffect(state.phase) {
         if (state.phase == Phase.GAME_OVER) {
-            onGameOver(state.winner, state.score1, state.score2, state.bestCombo)
+            onGameOver(state.winner, state.score1, state.score2, state.bestCombo1, state.bestCombo2)
         }
     }
 
