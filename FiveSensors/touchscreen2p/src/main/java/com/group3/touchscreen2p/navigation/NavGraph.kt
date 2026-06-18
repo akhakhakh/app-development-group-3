@@ -36,11 +36,12 @@ fun TapBattleNavGraph(navController: NavHostController) {
             val viewModel: GameViewModel = viewModel()
             GameScreen(
                 viewModel = viewModel,
-                onGameOver = { winner, score1, score2, bestCombo ->
-                    navController.navigate(Routes.gameOver(winner, score1, score2, bestCombo)) {
+                onGameOver = { winner, score1, score2, bestCombo1, bestCombo2 ->
+                    navController.navigate(Routes.gameOver(winner, score1, score2, bestCombo1, bestCombo2)) {
                         popUpTo(Routes.GAME) { inclusive = true }
                     }
-                }
+                },
+                onHome = { navController.popBackStack(Routes.HOME, inclusive = false) }
             )
         }
 
@@ -50,17 +51,22 @@ fun TapBattleNavGraph(navController: NavHostController) {
                 navArgument("winner") { type = NavType.IntType },
                 navArgument("score1") { type = NavType.IntType },
                 navArgument("score2") { type = NavType.IntType },
-                navArgument("bestCombo") { type = NavType.IntType }
+                navArgument("bestCombo1") { type = NavType.IntType },
+                navArgument("bestCombo2") { type = NavType.IntType }
             )
         ) { backStackEntry ->
             val winner = backStackEntry.arguments?.getInt("winner") ?: 0
             val score1 = backStackEntry.arguments?.getInt("score1") ?: 0
             val score2 = backStackEntry.arguments?.getInt("score2") ?: 0
+            val bestCombo1 = backStackEntry.arguments?.getInt("bestCombo1") ?: 0
+            val bestCombo2 = backStackEntry.arguments?.getInt("bestCombo2") ?: 0
 
             GameOverScreen(
                 winner = winner,
                 score1 = score1,
                 score2 = score2,
+                bestCombo1 = bestCombo1,
+                bestCombo2 = bestCombo2,
                 onPlayAgain = {
                     navController.navigate(Routes.GAME) {
                         popUpTo(Routes.HOME)
