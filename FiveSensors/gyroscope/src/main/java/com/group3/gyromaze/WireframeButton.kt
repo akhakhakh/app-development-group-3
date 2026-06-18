@@ -35,10 +35,10 @@ fun WireframeButton(label: String, onClick: () -> Unit) {
         )
     ) {
         Text(
-            text       = label,
-            fontSize   = 15.sp,
+            text = label,
+            fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
-            color      = TextWhite
+            color = TextWhite
         )
     }
 }

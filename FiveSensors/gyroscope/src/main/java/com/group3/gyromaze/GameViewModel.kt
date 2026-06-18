@@ -12,29 +12,30 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 class GameViewModel : ViewModel() {
-    private val MARBLE_RADIUS = 0.38f  // in grid units
-    private val BASE_FRICTION = 0.88f  // multiplied against velocity each frame
-    private val ICE_FRICTION = 0.975f // higher = more slippery (less slowdown)
-    private val TILT_FORCE = 0.018f // acceleration per unit of tilt per frame
-    private val DEADZONE = 0.04f // tilt values below this threshold are 0
-    private val FRAME_MS = 16L // 16ms ≈ 60 FPS
+    // ----- Physics constants ------
+    private val MARBLE_RADIUS = 0.38f
+    private val BASE_FRICTION = 0.93f
+    private val ICE_FRICTION = 0.988f
+    private val TILT_FORCE = 0.032f
+    private val DEADZONE = 0.04f
+    private val FRAME_MS = 16L
 
-    // ----- level State -----
+
+    // ------ Level state ------
     private var curLvlIndex = 0
     val curLvl get() = MazeData.levels[curLvlIndex]
 
-    private val _gameState = MutableStateFlow(
-        GameState(
-            marblePos = curLvl.marbleStart,
-            marbleVelocity = Vec2(0f, 0f)
-        )
-    )
+    private val _gameState = MutableStateFlow(GameState(marblePos = curLvl.marbleStart, marbleVelocity = Vec2(0f, 0f)))
     val gameState: StateFlow<GameState> = _gameState
 
-    // ----- door state -----
+    // ----- Door state -----
     private var doorTimer = 0f
     var doorsAreOpen = false
         private set
+
+    // ------ Pause state -----
+    private val _isPaused = MutableStateFlow(false)
+    val isPaused: StateFlow<Boolean> = _isPaused
 
     private var latestTiltX = 0f
     private var latestTiltY = 0f
@@ -44,6 +45,14 @@ class GameViewModel : ViewModel() {
     fun updateTilt(tiltX: Float, tiltY: Float) {
         latestTiltX = if (abs(tiltX) < DEADZONE) 0f else tiltX
         latestTiltY = if (abs(tiltY) < DEADZONE) 0f else tiltY
+    }
+
+    fun togglePause() {
+        _isPaused.value = !_isPaused.value
+    }
+
+    fun startTimer() {
+        _gameState.value = _gameState.value.copy(isTimerRunning = true)
     }
 
     private fun startGameLoop() {
@@ -57,10 +66,12 @@ class GameViewModel : ViewModel() {
 
     private fun tick() {
         val state = _gameState.value
-        if (state.isLvlComplete || state.isGameOver) return
+        // do nothing if paused, completed, game over or timer hasn't started
+        if (_isPaused.value || state.isLvlComplete || state.isGameOver || !state.isTimerRunning) return
 
         val dt = FRAME_MS / 1000f
 
+        // door toggle
         doorTimer += dt
         if (doorTimer >= curLvl.doorIntervalSeconds) {
             doorTimer = 0f
@@ -72,36 +83,40 @@ class GameViewModel : ViewModel() {
             else -> BASE_FRICTION
         }
 
-        var vel = Vec2(
+        var velocity = Vec2(
             x = (state.marbleVelocity.x + latestTiltX * TILT_FORCE) * friction,
             y = (state.marbleVelocity.y + latestTiltY * TILT_FORCE) * friction
         )
 
-        var pos = state.marblePos
+        var position = state.marblePos
 
-        val tryX = Vec2(pos.x + vel.x, pos.y)
+        val tryX = Vec2(position.x + velocity.x, position.y)
         if (!isWall(tryX)) {
-            pos = tryX
-        } else {
-            vel = Vec2(-vel.x * 0.2f, vel.y)
+            position = tryX
+        }
+        else {
+            velocity = Vec2(-velocity.x * 0.2f, velocity.y)
         }
 
-        val tryY = Vec2(pos.x, pos.y + vel.y)
+        val tryY = Vec2(position.x, position.y + velocity.y)
         if (!isWall(tryY)) {
-            pos = tryY
-        } else {
-            vel = Vec2(vel.x, -vel.y * 0.2f)
+            position = tryY
+        }
+        else {
+            velocity = Vec2(velocity.x, -velocity.y * 0.2f)
         }
 
-        // ----- teleporter ------
-        pos = checkTeleporter(pos)
+        var warped = checkTeleporter(position)
+        while (warped != position) {
+            position = warped
+            warped = checkTeleporter(position)
+        }
 
-        // ----- goal check ------
-        val won = getTileAt(pos) == TileType.GOAL
+        val won = getTileAt(position) == TileType.GOAL
 
         _gameState.value = state.copy(
-            marblePos = pos,
-            marbleVelocity = vel,
+            marblePos = position,
+            marbleVelocity = velocity,
             isLvlComplete = won,
             elapsedSeconds = state.elapsedSeconds + dt
         )
@@ -126,9 +141,8 @@ class GameViewModel : ViewModel() {
     private fun getTileAt(pos: Vec2): TileType {
         val col = pos.x.toInt()
         val row = pos.y.toInt()
-        if (col < 0 || col >= curLvl.cols || row < 0 || row >= curLvl.rows) {
-            return TileType.WALL
-        }
+        if (col < 0 || col >= curLvl.cols || row < 0 || row >= curLvl.rows) return TileType.WALL
+
         return when (val tile = curLvl.grid[row][col]) {
             TileType.DOOR_CLOSED,
             TileType.DOOR_OPEN -> if (doorsAreOpen) TileType.DOOR_OPEN else TileType.DOOR_CLOSED
@@ -139,6 +153,7 @@ class GameViewModel : ViewModel() {
     private fun checkTeleporter(pos: Vec2): Vec2 {
         val key = Vec2(pos.x.toInt().toFloat(), pos.y.toInt().toFloat())
         val exit = curLvl.teleporterPairs[key] ?: return pos
+
         return Vec2(exit.x + 0.5f, exit.y + 0.5f)
     }
 
@@ -147,14 +162,23 @@ class GameViewModel : ViewModel() {
         doorsAreOpen = false
         latestTiltX = 0f
         latestTiltY = 0f
+        _isPaused.value = false
         _gameState.value = GameState(
             marblePos = curLvl.marbleStart,
-            marbleVelocity = Vec2(0f, 0f)
+            marbleVelocity = Vec2(0f, 0f),
+            isTimerRunning = curLvl.tutorialMessage == null
         )
     }
 
     fun nextLvl() {
         if (curLvlIndex < MazeData.levels.size - 1) curLvlIndex++
+        restartLvl()
+    }
+
+    val isLastLevel get() = curLvlIndex == MazeData.levels.lastIndex
+
+    fun resetGame() {
+        curLvlIndex = 0
         restartLvl()
     }
 }

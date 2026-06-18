@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,6 +17,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.group3.gyromaze.ui.theme.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material3.Icon
 
 @Composable
 fun HowToPlayScreen(
@@ -60,8 +64,12 @@ fun HowToPlayScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // Phone tilt illustration (emoji stand-in)
-            Text("📱", fontSize = 64.sp)
+            Icon(
+                imageVector = Icons.Rounded.PhoneAndroid,
+                contentDescription = null,
+                tint = NeonCyan,
+                modifier = Modifier.size(64.dp)
+            )
 
             Spacer(Modifier.height(20.dp))
 

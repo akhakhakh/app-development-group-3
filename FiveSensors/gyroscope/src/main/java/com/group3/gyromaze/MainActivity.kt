@@ -52,12 +52,12 @@ class MainActivity : ComponentActivity() {
                     Screen.GAME -> GameScreen(
                         viewModel = viewModel,
                         sensorHandler = sensorHandler,
-                        onLevelComplete = { score ->
+                        onLvlComplete = { score ->
                             resultScore = score
                             isWin = true
                             currentScreen = Screen.LVL_COMPLETE
                         },
-                        onLevelFailed = { score ->
+                        onLvlFailed = { score ->
                             resultScore = score
                             isWin = false
                             currentScreen = Screen.LVL_FAILED
@@ -71,14 +71,26 @@ class MainActivity : ComponentActivity() {
                         isWin = true,
                         score = resultScore,
                         onPrimary = {
-                            sensorHandler.recalibrate()
-                            viewModel.nextLvl()
-                            currentScreen = Screen.GAME
+                            // If this was the last level, go to game complete screen instead
+                            if (viewModel.curLvlIndex == MazeData.levels.lastIndex) {
+                                currentScreen = Screen.GAME_COMPLETE
+                            } else {
+                                sensorHandler.recalibrate()
+                                viewModel.nextLvl()
+                                currentScreen = Screen.GAME
+                            }
                         },
                         onSecondary = {
                             sensorHandler.recalibrate()
                             viewModel.restartLvl()
                             currentScreen = Screen.GAME
+                        }
+                    )
+
+                    Screen.GAME_COMPLETE -> GameCompleteScreen(
+                        onMainMenu = {
+                            viewModel.resetGame()
+                            currentScreen = Screen.MAIN_MENU
                         }
                     )
 
