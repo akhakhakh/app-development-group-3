@@ -12,10 +12,10 @@ package com.group3.microphone
 
 // ── Score thresholds that unlock each difficulty tier ─────────────────────────
 // Raise to delay the ramp; lower to accelerate it.
-internal const val DIFF_TIER1_SCORE = 10    // Normal
-internal const val DIFF_TIER2_SCORE = 25    // Medium
-internal const val DIFF_TIER3_SCORE = 50    // Hard  (moving platforms appear)
-internal const val DIFF_TIER4_SCORE = 100   // Expert
+internal const val DIFF_TIER1_SCORE = 5    // Normal
+internal const val DIFF_TIER2_SCORE = 10    // Medium
+internal const val DIFF_TIER3_SCORE = 15    // Hard  (moving platforms appear)
+internal const val DIFF_TIER4_SCORE = 20   // Expert
 
 // ── World scroll speed (canvas-widths / second, while airborne) ───────────────
 internal const val SCROLL_SPEED_EASY   = 0.10f
