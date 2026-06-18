@@ -13,6 +13,7 @@ data class GameState(
     val targets: List<Target> = emptyList(),
     val countdownValue: Int = Constants.COUNTDOWN_SECONDS,
     val winner: Int = 0,
-    val bestCombo: Int = 0,
+    val bestCombo1: Int = 0,
+    val bestCombo2: Int = 0,
     val floatingEffects: List<FloatingEffect> = emptyList()
 )
