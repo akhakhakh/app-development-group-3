@@ -7,8 +7,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -215,7 +217,8 @@ fun GameScreen(
                 val progress = ((now - effect.startTimeMs) /
                         Constants.FLOATING_EFFECT_DURATION_MS.toFloat()).coerceIn(0f, 1f)
                 val cx = effect.normalizedX * size.width
-                val cy = effect.normalizedY * size.height - (with(density) { 60.dp.toPx() } * progress)
+                val cy =
+                    effect.normalizedY * size.height - (with(density) { 60.dp.toPx() } * progress)
                 val effectColor = when (effect.type) {
                     TargetType.BULLSEYE -> if (effect.player == 1) OrangePlayer1 else BluePlayer2
                     TargetType.TRICK -> Yellow
@@ -240,6 +243,8 @@ fun GameScreen(
             score = state.score2,
             phase = state.phase,
             countdownValue = state.countdownValue,
+            onPauseClick = {
+                viewModel.pauseGame() },
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
@@ -252,6 +257,8 @@ fun GameScreen(
             score = state.score1,
             phase = state.phase,
             countdownValue = state.countdownValue,
+            onPauseClick = {
+                viewModel.pauseGame() },
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
@@ -269,22 +276,6 @@ fun GameScreen(
                     fontWeight = FontWeight.ExtraBold,
                     color = Yellow.copy(alpha = 0.85f)
                 )
-            }
-        }
-
-        if (state.phase == Phase.PLAYING || state.phase == Phase.PAUSED) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(NavySurface.copy(alpha = 0.9f))
-                    .border(2.dp, Yellow, CircleShape)
-                    .clickable { viewModel.pauseGame() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "❙❙", color = Yellow, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -322,7 +313,7 @@ fun GameScreen(
                     OutlinedButton(
                         onClick = onHome,
                         modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
-                        ) { Text("HOME") }
+                    ) { Text("HOME") }
                 }
             }
         }
@@ -336,6 +327,7 @@ private fun PlayerHud(
     score: Int,
     phase: Phase,
     countdownValue: Int,
+    onPauseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val playerColor = if (player == 1) OrangePlayer1 else BluePlayer2
@@ -353,13 +345,32 @@ private fun PlayerHud(
             color = playerColor.copy(alpha = 0.7f),
             modifier = Modifier.align(Alignment.CenterStart)
         )
-        Text(
-            text = "$score",
-            fontSize = 36.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = playerColor,
-            modifier = Modifier.align(Alignment.Center)
-        )
+        Row(
+            modifier = Modifier.align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "$score",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = playerColor
+            )
+            if (phase == Phase.PLAYING || phase == Phase.PAUSED) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(NavySurface.copy(alpha = 0.9f))
+                        .border(2.dp, Yellow, CircleShape)
+                        .clickable(onClick = onPauseClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "❙❙", color = Yellow, fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp)
+                }
+            }
+        }
         if (phase == Phase.COUNTDOWN) {
             Text(
                 text = "$countdownValue",
