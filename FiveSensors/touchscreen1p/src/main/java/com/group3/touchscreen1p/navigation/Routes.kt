@@ -11,4 +11,6 @@ sealed class Routes(val route: String) {
     data object HighScore : Routes("highscore")
 
     data object HowToPlay : Routes("howtoplay")
+
+    data object GameOver : Routes("game_over/{score}/{highScore}")
 }

@@ -2,33 +2,29 @@ package com.group3.touchscreen1p.manager
 
 import android.content.Context
 
-object HighScoreManager {
+class HighScoreManager(
+    context: Context
+) {
 
-    private const val PREFS = "neon_reactor"
-    private const val HIGH_SCORE = "high_score"
+    private val prefs =
+        context.getSharedPreferences(
+            "neon_reactor",
+            Context.MODE_PRIVATE
+        )
 
-    fun saveScore(
-        context: Context,
-        score: Int
-    ) {
-
-        val prefs =
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-
-        if (score > getHighScore(context)) {
-
-            prefs.edit()
-                .putInt(HIGH_SCORE, score)
-                .apply()
-        }
+    fun getHighScore(): Int {
+        return prefs.getInt("high_score", 0)
     }
 
-    fun getHighScore(
-        context: Context
-    ): Int {
+    fun saveScore(score: Int) {
 
-        return context
-            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(HIGH_SCORE, 0)
+        val current = getHighScore()
+
+        if (score > current) {
+
+            prefs.edit()
+                .putInt("high_score", score)
+                .apply()
+        }
     }
 }
