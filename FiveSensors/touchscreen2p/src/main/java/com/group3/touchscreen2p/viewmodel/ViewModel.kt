@@ -286,6 +286,14 @@ class GameViewModel : ViewModel() {
             val newComboWindowEndMs2 = if (player == 2 && isCorrect) now +
                     Constants.COMBO_WINDOW_MS else s.comboWindowEndMs2
 
+            val newTrickHits1 = if (player == 1 && target.type ==
+                TargetType.TRICK) s.trickHits1 + 1 else s.trickHits1
+            val newTrickHits2 = if (player == 2 && target.type ==
+                TargetType.TRICK) s.trickHits2 + 1 else s.trickHits2
+            val newBombHits1 = if (player == 1 && target.type ==
+                TargetType.BOMB) s.bombHits1 + 1 else s.bombHits1
+            val newBombHits2 = if (player == 2 && target.type ==
+                TargetType.BOMB) s.bombHits2 + 1 else s.bombHits2
             s.copy(
                 score1 = newScore1,
                 score2 = newScore2,
@@ -298,7 +306,11 @@ class GameViewModel : ViewModel() {
                 comboWindowEndMs1 = newComboWindowEndMs1,
                 comboWindowEndMs2 = newComboWindowEndMs2,
                 bestCombo1 = maxOf(s.bestCombo1, newCombo1),
-                bestCombo2 = maxOf(s.bestCombo2, newCombo2)
+                bestCombo2 = maxOf(s.bestCombo2, newCombo2),
+                trickHits1 = newTrickHits1,
+                trickHits2 = newTrickHits2,
+                bombHits1 = newBombHits1,
+                bombHits2 = newBombHits2
             )
         }
 
