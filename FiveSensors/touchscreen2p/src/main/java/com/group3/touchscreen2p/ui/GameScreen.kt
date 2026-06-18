@@ -27,9 +27,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,13 +57,13 @@ import com.group3.touchscreen2p.model.TargetType
 import com.group3.touchscreen2p.ui.theme.BlueDivider
 import com.group3.touchscreen2p.ui.theme.BluePlayer2
 import com.group3.touchscreen2p.ui.theme.BombRed
-import com.group3.touchscreen2p.ui.theme.GreyText
 import com.group3.touchscreen2p.ui.theme.NavyBackground
 import com.group3.touchscreen2p.ui.theme.NavyCard
 import com.group3.touchscreen2p.ui.theme.NavySurface
 import com.group3.touchscreen2p.ui.theme.OrangePlayer1
 import com.group3.touchscreen2p.ui.theme.Yellow
 import com.group3.touchscreen2p.viewmodel.GameViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -243,6 +245,8 @@ fun GameScreen(
             score = state.score2,
             phase = state.phase,
             countdownValue = state.countdownValue,
+            combo = state.combo2,
+            comboWindowEndMs = state.comboWindowEndMs2,
             onPauseClick = {
                 viewModel.pauseGame() },
             modifier = Modifier
@@ -257,6 +261,8 @@ fun GameScreen(
             score = state.score1,
             phase = state.phase,
             countdownValue = state.countdownValue,
+            combo = state.combo1,
+            comboWindowEndMs = state.comboWindowEndMs1,
             onPauseClick = {
                 viewModel.pauseGame() },
             modifier = Modifier
@@ -327,10 +333,28 @@ private fun PlayerHud(
     score: Int,
     phase: Phase,
     countdownValue: Int,
+    combo: Int,
+    comboWindowEndMs: Long,
     onPauseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val playerColor = if (player == 1) OrangePlayer1 else BluePlayer2
+    val comboActive = combo >=
+            Constants.COMBO_THRESHOLD
+
+    var now by remember {
+        mutableStateOf(SystemClock.elapsedRealtime()) }
+    LaunchedEffect(combo, phase) {
+        while (combo > 0 && phase == Phase.PLAYING) {
+            now = SystemClock.elapsedRealtime()
+            delay(16L)
+        }
+    }
+
+    val comboRemainingFraction = if (combo > 0) {
+        ((comboWindowEndMs - now).toFloat() /
+                Constants.COMBO_WINDOW_MS).coerceIn(0f, 1f)
+    } else 0f
 
     Box(
         modifier = modifier
@@ -379,13 +403,32 @@ private fun PlayerHud(
                 color = Yellow,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
-        } else {
+        } else if (comboActive) {
             Text(
-                text = "→ ${Constants.WIN_SCORE}",
+                text = "${combo}x COMBO!",
                 fontSize = 12.sp,
-                color = GreyText,
+                fontWeight = FontWeight.Bold,
+                color = Yellow,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
+        }
+
+        if (combo > 0) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(NavyBackground)
+            ) {
+                Box(
+                    modifier = Modifier
+
+                        .fillMaxWidth(comboRemainingFraction)
+                        .height(3.dp)
+                        .background(Yellow)
+                )
+            }
         }
     }
 }
