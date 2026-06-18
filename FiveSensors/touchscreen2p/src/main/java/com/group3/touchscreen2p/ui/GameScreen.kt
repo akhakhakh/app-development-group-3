@@ -44,6 +44,10 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import android.media.AudioAttributes
+import android.media.SoundPool
+import androidx.compose.runtime.DisposableEffect
+import com.group3.touchscreen2p.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -77,7 +81,31 @@ fun GameScreen(
     val context = LocalContext.current
     val settingsRepository = remember { SettingsRepository(context) }
     val volume by settingsRepository.sfxVolume.collectAsState(initial = 0.8f)
+    val sfxEnabled by settingsRepository.sfxEnabled.collectAsState(initial = true)
+
+    val soundPool = remember {
+        SoundPool.Builder()
+            .setMaxStreams(4)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            .build()
+    }
+
+    val bullseyeSoundId = remember { soundPool.load(context, R.raw.game_click_short, 1) }
+    val trickSoundId = remember { soundPool.load(context, R.raw.trick_click_short, 1) }
+    val bombSoundId = remember { soundPool.load(context, R.raw.bomb_click_short, 1) }
     val scope = rememberCoroutineScope()
+    DisposableEffect(Unit) {
+        onDispose { soundPool.release() }
+    }
+
+    val sfxEnabledRef = rememberUpdatedState(sfxEnabled)
+    val volumeRef = rememberUpdatedState(volume)
+
 
     LaunchedEffect(Unit) {
         viewModel.startGame()
@@ -127,6 +155,15 @@ fun GameScreen(
                                     }
 
                                 if (hitTarget != null) {
+                                    if (sfxEnabledRef.value) {
+                                        val soundId = when (hitTarget.type) {
+                                            TargetType.BULLSEYE -> bullseyeSoundId
+                                            TargetType.TRICK -> trickSoundId
+                                            TargetType.BOMB -> bombSoundId
+                                        }
+                                        soundPool.play(soundId, volumeRef.value,
+                                            volumeRef.value, 1, 0, 1f)
+                                    }
                                     viewModel.onTargetHit(player, hitTarget, nx, ny)
                                 }
                             }
