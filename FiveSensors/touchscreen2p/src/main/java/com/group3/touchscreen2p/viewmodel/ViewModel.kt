@@ -19,6 +19,7 @@ import kotlin.random.Random
 import com.group3.touchscreen2p.model.Target
 import com.group3.touchscreen2p.model.TargetType
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class GameViewModel : ViewModel() {
     private val _state = MutableStateFlow(GameState())
@@ -127,18 +128,36 @@ class GameViewModel : ViewModel() {
             var list = s.targets
             val specialsEnabled = maxOf(s.score1, s.score2) >= Constants.SPECIALS_UNLOCK_SCORE
             val leadingScore = maxOf(s.score1, s.score2)
+            val maxTargets = currentMaxTargetsPerPlayer(leadingScore)
 
-            if (list.count { it.player == 1 } < Constants.MAX_TARGETS_PER_PLAYER) {
+            if (list.count { it.player == 1 } < maxTargets) {
                 list = list + buildTarget(player = 1, now = now, specialsEnabled =
                     specialsEnabled, existing = list, leadingScore = leadingScore)
             }
-            if (list.count { it.player == 2 } < Constants.MAX_TARGETS_PER_PLAYER) {
+            if (list.count { it.player == 2 } < maxTargets) {
                 list = list + buildTarget(player = 2, now = now, specialsEnabled =
                     specialsEnabled, existing = list, leadingScore = leadingScore)
             }
 
             s.copy(targets = list)
         }
+    }
+
+    private fun currentMaxTargetsPerPlayer(leadingScore:
+                                           Int): Int {
+        if (leadingScore <=
+            Constants.LIFETIME_REDUCTION_START_SCORE) {
+            return Constants.MAX_TARGETS_PER_PLAYER
+        }
+        val t = ((leadingScore -
+                Constants.LIFETIME_REDUCTION_START_SCORE).toFloat() /
+                (Constants.WIN_SCORE -
+                        Constants.LIFETIME_REDUCTION_START_SCORE).toFloat())
+            .coerceIn(0f, 1f)
+        val cap = Constants.MAX_TARGETS_PER_PLAYER +
+                (Constants.MAX_TARGETS_PER_PLAYER_LATE -
+                        Constants.MAX_TARGETS_PER_PLAYER) * t
+        return cap.roundToInt()
     }
 
     private fun buildTarget(player: Int, now: Long, specialsEnabled: Boolean,
