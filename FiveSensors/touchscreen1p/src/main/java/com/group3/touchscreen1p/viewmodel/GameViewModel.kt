@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.group3.touchscreen1p.model.FallingOrb
 import com.group3.touchscreen1p.model.GameState
 import com.group3.touchscreen1p.model.OrbColor
+import com.group3.touchscreen1p.model.DifficultyLevel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +16,9 @@ import kotlin.random.Random
 class GameViewModel : ViewModel() {
 
     private val _gameState = MutableStateFlow(GameState())
+    private var orbSpeed = 8f
+    private var spawnDelay = 1200L
+    private var bestScore = 0
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
 
     private var nextOrbId = 0L
@@ -29,7 +33,7 @@ class GameViewModel : ViewModel() {
 
             while (true) {
 
-                delay(1200)
+                delay(spawnDelay)
 
                 if (_gameState.value.isPaused ||
                     _gameState.value.isGameOver
@@ -73,38 +77,59 @@ class GameViewModel : ViewModel() {
 
     private fun updateOrbs() {
 
-        val moved = _gameState.value.orbs.map {
-
+        val movedOrbs = _gameState.value.orbs.map {
             it.copy(
-                positionY = it.positionY + 8f
+                positionY = it.positionY + orbSpeed
             )
         }
 
-        val missed = moved.filter {
+        val missedOrbs = movedOrbs.filter {
             it.positionY > 1500f
         }
 
-        var lives = _gameState.value.lives
-
-        if (missed.isNotEmpty()) {
-            lives -= missed.size
+        val remainingOrbs = movedOrbs.filter {
+            it.positionY <= 1500f
         }
 
+        var currentLives = _gameState.value.lives
+
+        if (missedOrbs.isNotEmpty()) {
+            currentLives -= missedOrbs.size
+        }
+
+        currentLives = currentLives.coerceAtLeast(0)
+
         _gameState.value = _gameState.value.copy(
-            lives = lives.coerceAtLeast(0),
-            combo = if (missed.isNotEmpty()) 1 else _gameState.value.combo,
-            isGameOver = lives <= 0,
-            orbs = moved.filter {
-                it.positionY <= 1500f
-            }
+            lives = currentLives,
+            combo = if (missedOrbs.isNotEmpty()) 1 else _gameState.value.combo,
+            isGameOver = currentLives <= 0,
+            orbs = remainingOrbs
         )
     }
 
-    fun hitColor(color: OrbColor) {
+    private fun loseLife() {
+
+        val newLives =
+            (_gameState.value.lives - 1)
+                .coerceAtLeast(0)
+
+        _gameState.value =
+            _gameState.value.copy(
+                lives = newLives,
+                combo = 1,
+                isGameOver = newLives <= 0
+            )
+    }
+
+    fun hitColor(
+        color: OrbColor,
+        lane: Int
+    ) {
 
         val orb = _gameState.value.orbs.firstOrNull {
 
             it.color == color &&
+                    it.lane == lane &&
                     it.positionY in 1100f..1400f
         }
 
@@ -114,12 +139,16 @@ class GameViewModel : ViewModel() {
                 (_gameState.value.combo + 1)
                     .coerceAtMost(10)
 
+            val newScore =
+                _gameState.value.score +
+                        (10 * _gameState.value.combo)
+
+            bestScore = maxOf(bestScore, newScore)
+
             _gameState.value =
                 _gameState.value.copy(
 
-                    score =
-                        _gameState.value.score +
-                                (10 * _gameState.value.combo),
+                    score = newScore,
 
                     combo = combo,
 
@@ -131,10 +160,7 @@ class GameViewModel : ViewModel() {
 
         } else {
 
-            _gameState.value =
-                _gameState.value.copy(
-                    combo = 1
-                )
+            loseLife()
         }
     }
 
@@ -150,5 +176,28 @@ class GameViewModel : ViewModel() {
         nextOrbId = 0
 
         _gameState.value = GameState()
+    }
+
+    fun setDifficulty(
+        difficulty: DifficultyLevel
+    ) {
+
+        when(difficulty) {
+
+            DifficultyLevel.EASY -> {
+                orbSpeed = 5f
+                spawnDelay = 1500L
+            }
+
+            DifficultyLevel.MEDIUM -> {
+                orbSpeed = 8f
+                spawnDelay = 1200L
+            }
+
+            DifficultyLevel.HARD -> {
+                orbSpeed = 12f
+                spawnDelay = 800L
+            }
+        }
     }
 }
