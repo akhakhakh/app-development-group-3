@@ -114,7 +114,8 @@ class GameViewModel : ViewModel() {
     private fun launchSpawner() {
         spawnJob = viewModelScope.launch {
             while (isActive) {
-                delay(Constants.SPAWN_INTERVAL_MS)
+                val leadingScore = maxOf(_state.value.score1, _state.value.score2)
+                delay(currentSpawnIntervalMs(leadingScore))
                 if (_state.value.phase == Phase.PLAYING) {
                     spawnTargets()
                 }
@@ -143,6 +144,23 @@ class GameViewModel : ViewModel() {
         }
     }
 
+    private fun currentSpawnIntervalMs(leadingScore: Int):
+            Long {
+        if (leadingScore <=
+            Constants.MAX_TARGETS_RAMP_START_SCORE) {
+            return Constants.SPAWN_INTERVAL_MS
+        }
+        val t = ((leadingScore -
+                Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat() /
+                (Constants.MAX_TARGETS_RAMP_END_SCORE -
+                        Constants.MAX_TARGETS_RAMP_START_SCORE).toFloat())
+            .coerceIn(0f, 1f)
+        val interval = Constants.SPAWN_INTERVAL_MS -
+                (Constants.SPAWN_INTERVAL_MS -
+                        Constants.SPAWN_INTERVAL_MIN_MS) * t
+        return interval.toLong().coerceAtLeast(Constants.SPAWN_INTERVAL_MIN_MS)
+    }
+
     private fun currentMaxTargetsPerPlayer(leadingScore: Int): Int {
         if (leadingScore <= Constants.MAX_TARGETS_RAMP_START_SCORE) {
             return Constants.MAX_TARGETS_PER_PLAYER
@@ -165,6 +183,23 @@ class GameViewModel : ViewModel() {
         var x: Float
         var y: Float
         var attempts = 0
+
+        val type = if (!specialsEnabled) { TargetType.BULLSEYE
+        } else {
+            when (Random.nextInt(10)) {
+                in 0..6 -> TargetType.BULLSEYE // 70%
+                in 7..8 -> TargetType.TRICK // 20%
+                else -> TargetType.BOMB // 10%
+            }
+        }
+
+        val lifetimeFloor = if (type == TargetType.BULLSEYE)
+        {
+            Constants.TARGET_LIFETIME_MIN_MS
+        } else {
+            Constants.SPECIAL_TARGET_LIFETIME_MIN_MS
+        }
+
         val lifetime = if (leadingScore <
             Constants.LIFETIME_REDUCTION_START_SCORE) {
             Constants.TARGET_LIFETIME_MS
@@ -173,7 +208,7 @@ class GameViewModel : ViewModel() {
                     (Constants.WIN_SCORE - Constants.LIFETIME_REDUCTION_START_SCORE).toFloat()
             val curvedT = t.pow(Constants.LIFETIME_SHRINK_EXPONENT)
             (Constants.TARGET_LIFETIME_MS - (Constants.TARGET_LIFETIME_MS
-                    - Constants.TARGET_LIFETIME_MIN_MS) * curvedT)
+                    - lifetimeFloor) * curvedT)
                 .toLong()
                 .coerceAtLeast(Constants.TARGET_LIFETIME_MIN_MS)
         }
@@ -187,14 +222,7 @@ class GameViewModel : ViewModel() {
                 val dy = y - t.normalizedY
                 dx * dx + dy * dy < Constants.TARGET_MIN_SPACING * Constants.TARGET_MIN_SPACING
             })
-        val type = if (!specialsEnabled) { TargetType.BULLSEYE
-        } else {
-            when (Random.nextInt(10)) {
-                in 0..6 -> TargetType.BULLSEYE // 70%
-                in 7..8 -> TargetType.TRICK // 20%
-                else -> TargetType.BOMB // 10%
-            }
-        }
+
 
         return Target(
             player = player, normalizedX = x, normalizedY = y, spawnTimeMs = now, lifetimeMs =
