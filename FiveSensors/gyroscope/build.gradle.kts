@@ -4,12 +4,8 @@ plugins {
 }
 
 android {
-    namespace = "com.group3.gyromaze"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    namespace = "com.group3.gyroscope"
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
