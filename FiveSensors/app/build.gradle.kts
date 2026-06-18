@@ -37,6 +37,7 @@ android {
 dependencies {
     implementation(project(":touchscreen1p"))
     implementation(project(":touchscreen2p"))
+    implementation(project(":microphone"))
     implementation(project(":gyroscope"))
     implementation(project(":camera"))
 
