@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.group3.gyroscope.R
 import com.group3.gyromaze.ui.theme.*
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
@@ -61,7 +62,7 @@ fun MainMenuScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.appicon),
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
                     contentDescription = "Logo",
                     modifier = Modifier.size(64.dp)
                 )
