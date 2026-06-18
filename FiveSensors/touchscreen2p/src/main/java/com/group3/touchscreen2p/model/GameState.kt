@@ -15,5 +15,9 @@ data class GameState(
     val winner: Int = 0,
     val bestCombo1: Int = 0,
     val bestCombo2: Int = 0,
+    val trickHits1: Int = 0,
+    val trickHits2: Int = 0,
+    val bombHits1: Int = 0,
+    val bombHits2: Int = 0,
     val floatingEffects: List<FloatingEffect> = emptyList()
 )
