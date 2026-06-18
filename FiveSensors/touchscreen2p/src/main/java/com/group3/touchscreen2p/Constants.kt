@@ -11,6 +11,7 @@ object Constants {
     /* --- Combo --- */
     const val COMBO_THRESHOLD = 3 // amount of taps needed to activate combo
     const val COMBO_MULTIPLIER = 2 // score x2 when combo is active
+    const val COMBO_WINDOW_MS = 2000L // time allowed between correct taps before combo resets
 
     /* --- Timing (milliseconds) --- */
     const val COUNTDOWN_SECONDS = 3
