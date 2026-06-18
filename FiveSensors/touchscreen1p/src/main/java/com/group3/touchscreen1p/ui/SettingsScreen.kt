@@ -9,10 +9,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.group3.touchscreen1p.R
+import com.group3.touchscreen1p.manager.DifficultyManager
 import com.group3.touchscreen1p.model.DifficultyLevel
 import com.group3.touchscreen1p.ui.theme.BackgroundDark
 
@@ -21,11 +23,14 @@ fun SettingsScreen(
     navController: NavController
 ) {
 
+    val context = LocalContext.current
+    val difficultyManager = remember { DifficultyManager(context) }
+
     var soundEnabled by remember { mutableStateOf(true) }
     var musicEnabled by remember { mutableStateOf(true) }
 
     var difficulty by remember {
-        mutableStateOf(DifficultyLevel.MEDIUM)
+        mutableStateOf(difficultyManager.getDifficulty())
     }
 
     Column(
@@ -162,6 +167,7 @@ fun SettingsScreen(
                         selected = difficulty == DifficultyLevel.EASY
                     ) {
                         difficulty = DifficultyLevel.EASY
+                        difficultyManager.saveDifficulty(DifficultyLevel.EASY)
                     }
 
                     DifficultyButton(
@@ -169,6 +175,7 @@ fun SettingsScreen(
                         selected = difficulty == DifficultyLevel.MEDIUM
                     ) {
                         difficulty = DifficultyLevel.MEDIUM
+                        difficultyManager.saveDifficulty(DifficultyLevel.MEDIUM)
                     }
 
                     DifficultyButton(
@@ -176,6 +183,7 @@ fun SettingsScreen(
                         selected = difficulty == DifficultyLevel.HARD
                     ) {
                         difficulty = DifficultyLevel.HARD
+                        difficultyManager.saveDifficulty(DifficultyLevel.HARD)
                     }
                 }
             }

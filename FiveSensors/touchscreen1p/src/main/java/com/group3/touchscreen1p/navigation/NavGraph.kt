@@ -1,17 +1,16 @@
 package com.group3.touchscreen1p.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.compose.rememberNavController
-import com.group3.touchscreen1p.manager.HighScoreManager
+import androidx.navigation.navArgument
 import com.group3.touchscreen1p.ui.*
 
 @Composable
 fun NavGraph() {
 
     val navController = rememberNavController()
-    val context = LocalContext.current
 
     NavHost(
         navController = navController,
@@ -23,7 +22,7 @@ fun NavGraph() {
         }
 
         composable(Routes.Game.route) {
-            GameScreen()
+            GameScreen(navController)
         }
 
         composable(Routes.Settings.route) {
@@ -31,11 +30,32 @@ fun NavGraph() {
         }
 
         composable(Routes.HighScore.route) {
-            HighScoreScreen(highScore = HighScoreManager.getHighScore(context))
+            HighScoreScreen(navController = navController)
         }
 
         composable(Routes.HowToPlay.route) {
-            HowToPlayScreen()
+            HowToPlayScreen(navController = navController)
+        }
+
+        composable(
+            route = Routes.GameOver.route,
+            arguments = listOf(
+                navArgument("score") { type = NavType.IntType },
+                navArgument("highScore") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val score = backStackEntry.arguments?.getInt("score") ?: 0
+            val highScore = backStackEntry.arguments?.getInt("highScore") ?: 0
+            GameOverScreen(
+                score = score,
+                highScore = highScore,
+                navController = navController,
+                onRetry = {
+                    navController.navigate(Routes.Game.route) {
+                        popUpTo(Routes.Home.route)
+                    }
+                }
+            )
         }
     }
 }
