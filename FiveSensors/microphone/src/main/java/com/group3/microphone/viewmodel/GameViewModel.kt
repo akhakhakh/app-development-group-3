@@ -84,8 +84,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var characterLandedPlatformId: Int? = null
     private val scoredPlatformIds = mutableSetOf<Int>()
     private val passedPlatformIds = mutableSetOf<Int>()
-    private val everLandedPlatformIds = mutableSetOf<Int>()
-    private var consecutiveSkips = 0
 
     private var listeningJob: Job? = null
     private var resetJob: Job? = null
@@ -197,8 +195,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _score.value = 0
         passedPlatformIds.clear()
         scoredPlatformIds.clear()
-        everLandedPlatformIds.clear()
-        consecutiveSkips = 0
         val startY = INITIAL_CHARACTER_Y + CHARACTER_HEIGHT_FRACTION
         lastPlatformY = startY
 
@@ -243,23 +239,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         // Keep platforms that are still (or could still oscillate into) the visible area.
         }.filter { it.scrollX + it.widthFraction + it.moveAmplitude > 0f }
-
-        // Score every platform whose scroll-based right-edge has passed the character's X.
-        // Using scrollX (not x) prevents oscillation from prematurely triggering the score.
-        moved.forEach { p ->
-            if (p.id != 0 &&
-                p.scrollX + p.widthFraction < CHARACTER_X_FRACTION &&
-                scoredPlatformIds.add(p.id)
-            ) {
-                if (p.id in everLandedPlatformIds) {
-                    consecutiveSkips = 0
-                    _score.value += 1
-                } else {
-                    consecutiveSkips++
-                    _score.value += consecutiveSkips
-                }
-            }
-        }
 
         val result = moved.toMutableList()
         val rightmost = moved.maxByOrNull { it.scrollX }
@@ -329,10 +308,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 passedPlatformIds.clear()
                 SoundManager.playLand()
                 if (hit.id != 0 && scoredPlatformIds.add(hit.id)) {
-                    consecutiveSkips = 0
                     _score.value += 1
                 }
-                everLandedPlatformIds.add(hit.id)
                 return
             }
         }

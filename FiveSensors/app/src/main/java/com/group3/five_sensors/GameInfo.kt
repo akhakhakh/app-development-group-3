@@ -37,7 +37,7 @@ val allGames = listOf(
     GameInfo(
         name = "Voice Jump",
         description = "Use your voice to win",
-        howToPlay = "Make loud noise, shout, clap, or blow, to make your ninja jump. The louder the sound, the higher the jump! Platforms scroll in from the right; time your jumps to land on them. Fall off the bottom and it's game over.",
+        howToPlay = "Make loud noise, shout, clap, or blow, to make your ninja jump. The louder the sound, the higher the jump! Platforms scroll in from the right; time your jumps to land on them and gain points. Fall off the bottom and it's game over.",
         madeBy = "Milana Doborjginidze",
         color = Color(0xFF1E88E5),
         activityClass = com.group3.microphone.MainActivity::class.java,
