@@ -6,6 +6,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.group3.microphone.CEILING_Y
 import com.group3.microphone.CHARACTER_HEIGHT_FRACTION
 import com.group3.microphone.CHARACTER_X_FRACTION
 import com.group3.microphone.DifficultyConfig
@@ -269,7 +270,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             .coerceAtMost(MAX_FALL_SPEED)
 
         val prevY      = _characterY.value
-        val newY       = prevY + characterVelocityY * deltaSeconds
+        var newY       = prevY + characterVelocityY * deltaSeconds
+
+        if (newY < CEILING_Y) {
+            newY = CEILING_Y
+            characterVelocityY = 0f
+        }
+
         val prevBottom = prevY  + CHARACTER_HEIGHT_FRACTION
         val newBottom  = newY   + CHARACTER_HEIGHT_FRACTION
 
