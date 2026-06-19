@@ -1,5 +1,6 @@
 package com.group3.five_sensors
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,19 +67,14 @@ fun IntroScreen(onGetStarted: () -> Unit) {
                 .padding(horizontal = 28.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.app_icon),
+                contentDescription = "App icon",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF151530)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "◎",
-                    color = Color(0xFF4DD9FF),
-                    fontSize = 40.sp
-                )
-            }
+            )
 
             Spacer(Modifier.height(24.dp))
 
@@ -114,6 +113,7 @@ fun IntroScreen(onGetStarted: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(CreamBg)
+                .navigationBarsPadding()
                 .padding(horizontal = 28.dp, vertical = 20.dp)
         ) {
             Button(

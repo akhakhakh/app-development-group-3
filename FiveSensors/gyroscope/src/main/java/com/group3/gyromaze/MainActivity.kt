@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.group3.gyromaze.ui.theme.FiveSensorsTheme
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +19,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         sensorHandler = SensorHandler(this)
-
+        hideSystemBars()
         setContent {
             FiveSensorsTheme {
                 var currentScreen by remember { mutableStateOf(Screen.MAIN_MENU) }
@@ -72,7 +75,7 @@ class MainActivity : ComponentActivity() {
                         score = resultScore,
                         onPrimary = {
                             // If this was the last level, go to game complete screen instead
-                            if (viewModel.curLvlIndex == MazeData.levels.lastIndex) {
+                            if (viewModel.isLastLevel) {
                                 currentScreen = Screen.GAME_COMPLETE
                             } else {
                                 sensorHandler.recalibrate()
@@ -111,6 +114,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemBars()
+    }
+
     override fun onResume() {
         super.onResume()
         sensorHandler.start()
@@ -119,5 +127,13 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         sensorHandler.stop()
+    }
+
+    private fun hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
     }
 }

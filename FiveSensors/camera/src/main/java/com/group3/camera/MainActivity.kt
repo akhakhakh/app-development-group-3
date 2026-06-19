@@ -5,9 +5,12 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -25,6 +28,7 @@ import com.group3.camera.ui.theme.FiveSensorsTheme
 
 private sealed class Screen {
     object Landing : Screen()
+    object HowToPlay : Screen()
     object FaceCheck : Screen()
     object ExpressionTutorial : Screen()
     object Game : Screen()
@@ -34,14 +38,22 @@ private sealed class Screen {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        hideSystemBars()
         setContent {
             FiveSensorsTheme {
                 CameraPermissionWrapper {
                     var screen by remember { mutableStateOf<Screen>(Screen.Landing) }
+                    BackHandler(enabled = screen != Screen.Landing) {
+                        screen = Screen.Landing
+                    }
                     when (screen) {
                         Screen.Landing ->
-                            LandingScreen(onPlay = { screen = Screen.FaceCheck })
+                            LandingScreen(
+                                onPlay = { screen = Screen.FaceCheck },
+                                onHowToPlay = { screen = Screen.HowToPlay }
+                            )
+                        Screen.HowToPlay ->
+                            HowToPlayScreen(onBack = { screen = Screen.Landing })
                         Screen.FaceCheck ->
                             FaceCheckScreen(onNext = { screen = Screen.ExpressionTutorial })
                         Screen.ExpressionTutorial ->
@@ -53,6 +65,19 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemBars()
+    }
+
+    private fun hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 }

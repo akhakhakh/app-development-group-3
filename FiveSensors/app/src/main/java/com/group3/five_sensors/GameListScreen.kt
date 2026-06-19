@@ -1,5 +1,6 @@
 package com.group3.five_sensors
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,11 +80,14 @@ private fun GameRow(game: GameInfo, onClick: () -> Unit) {
                 .background(game.color),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Icon",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 11.sp
-            )
+            if (game.iconRes != null) {
+                Image(
+                    painter = painterResource(id = game.iconRes),
+                    contentDescription = game.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(42.dp)
+                )
+            }
         }
 
         Spacer(Modifier.width(16.dp))

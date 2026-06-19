@@ -62,7 +62,7 @@ private val emoticonDrawables = listOf(
 )
 
 @Composable
-fun LandingScreen(onPlay: () -> Unit) {
+fun LandingScreen(onPlay: () -> Unit, onHowToPlay: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -112,6 +112,26 @@ fun LandingScreen(onPlay: () -> Unit) {
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = onHowToPlay,
+                modifier = Modifier
+                    .width(240.dp)
+                    .height(52.dp),
+                shape = RoundedCornerShape(26.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = LandingBlue
+                )
+            ) {
+                Text(
+                    text = "HOW TO PLAY",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

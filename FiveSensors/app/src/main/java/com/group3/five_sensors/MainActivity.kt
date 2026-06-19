@@ -3,6 +3,7 @@ package com.group3.five_sensors
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +38,14 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(onLaunchGame: (GameInfo) -> Unit) {
     var screen: AppScreen by remember { mutableStateOf(AppScreen.Splash) }
+
+    BackHandler(enabled = screen is AppScreen.GameDetail || screen is AppScreen.GameList) {
+        screen = when (screen) {
+            is AppScreen.GameDetail -> AppScreen.GameList
+            is AppScreen.GameList -> AppScreen.Intro
+            else -> screen
+        }
+    }
 
     when (val s = screen) {
         is AppScreen.Splash -> SplashScreen(onStart = { screen = AppScreen.Intro })
